@@ -77,7 +77,7 @@ async function ai(key,sys,msg,img){
   if(img)c.push({type:"image",source:{type:"base64",media_type:img.type,data:img.data}});
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
-  const r=await fetch("/.netlify/functions/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
+  const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||"API error "+r.status);}
   const d=await r.json();return d.content.map(b=>b.text||"").join("\n");
 }
