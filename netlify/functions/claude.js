@@ -2,12 +2,12 @@
 // Spouští se na Netlify Edge - API klíč zůstává na serveru, nevidí ho prohlížeč.
 // Env variable ANTHROPIC_API_KEY se nastavuje v Netlify UI: Site settings > Environment variables
 
-export default async (req, context) => {
+export default async (req, cohntext) => {
   // CORS pro případ potřeby
   if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allowh-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
       },
@@ -41,7 +41,7 @@ export default async (req, context) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+              model: "claude-sonnet-4-6",
         max_tokens: 2000,
         system,
         messages,
