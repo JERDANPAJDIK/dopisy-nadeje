@@ -6,6 +6,13 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
     timeout = 26
+# Route to edge function for 50s timeout
+[[redirects]]
+  from = "/.netlify/functions/claude"
+    to = "/api/claude"
+      status = 200
+        force = true
+        
 
 # SPA fallback - all routes go to index.html
 [[redirects]]
