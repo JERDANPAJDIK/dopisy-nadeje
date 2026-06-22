@@ -28,11 +28,11 @@ export default async (req, context) => {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, system, messages }),
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, stream: true, system, messages }),
     });
-    const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      status: response.status, headers: { "Content-Type": "application/json" },
+    return new Response(response.body, {
+      status: response.status,
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: { message: err.message || "Proxy error" } }), {
