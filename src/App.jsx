@@ -540,7 +540,7 @@ function Scan({cs,lang,apiKey,back,needKey}){
   const [img,setImg]=useState(null);const [prev,setPrev]=useState(null);
   const [loading,setLoading]=useState(false);const [result,setResult]=useState(null);const [err,setErr]=useState("");
   const ref=useRef();
-  const resizeImg=(file,maxDim=1600)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.85);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
+  const resizeImg=(file,maxDim=1000)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.7);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
   const ld=async f=>{if(!f)return;const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev(r.preview);};
   const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),cs?"Rozpoznej a přelož tento dopis.":"Recognize and translate.",img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
