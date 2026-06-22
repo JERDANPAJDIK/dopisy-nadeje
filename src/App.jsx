@@ -78,8 +78,8 @@ async function ai(key,sys,msg,img){
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
   const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||"API error "+r.status);}
-  const d=await r.json();return d.content.map(b=>b.text||"").join("\n");
+  if(!r.ok){const e=await r.text().catch(()=>"");throw new Error(e||"API error "+r.status);}
+  const reader=r.body.getReader();const dec=new TextDecoder();let txt="";while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value,{stream:true}).split("\n")){if(line.startsWith("data: ")){const d=line.slice(6);if(d==="[DONE]")continue;try{const p=JSON.parse(d);if(p.type==="content_block_delta"&&p.delta?.text)txt+=p.delta.text;}catch(e){}}}}return txt||"No response";
 }
 
 const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
