@@ -6,6 +6,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
     timeout = 26
+
+    [[edge_functions]]
+      function = "claude"
+        path = "/api/claude"
 # Route to edge function for 50s timeout
 [[redirects]]
   from = "/.netlify/functions/claude"
