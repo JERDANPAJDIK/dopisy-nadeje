@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag"},
@@ -117,7 +117,8 @@ export default function App(){
   const [key,setKey]=useState("server-managed");
   const [showKey,setShowKey]=useState(false);
   const [tmpKey,setTmpKey]=useState("");
-  const [letters,setLetters]=useState([]);
+  const [letters,setLetters]=useState(()=>{try{const s=localStorage.getItem("dopisy-nadeje-letters");return s?JSON.parse(s):[];}catch(e){return[];}});
+  useEffect(()=>{try{localStorage.setItem("dopisy-nadeje-letters",JSON.stringify(letters));}catch(e){}},[letters]);
   const [composeBack,setComposeBack]=useState("home");
   const cs=lang==="cs";
   const home=()=>{setScr("home");setSel(null);};
