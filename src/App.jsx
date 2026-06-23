@@ -441,6 +441,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [err,setErr]=useState("");
   const [copied,setCopied]=useState(false);
   const [saved,setSaved]=useState(false);
+  const [showGuide,setShowGuide]=useState(false);
   const cp=t=>{try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch(e){}};
   const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(cs?"Generuji...":"Generating...");setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${cs?"O mně":"About me"}: ${about}\n\n${cs?"Napiš":"Write"} ${lt==="postcard"?(cs?"pohlednici":"postcard"):(cs?"dopis":"letter")} pro ${pr.ne}.`);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Kontroluji...":"Checking...");setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
@@ -529,13 +530,52 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
     {(result||trans)&&<div className="bg-stone-50 border border-dashed border-stone-300 rounded-lg p-4 mt-4 text-sm">
       <h4 className="font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"Jak odeslat":"How to send"}</h4>
       {sm==="online"?<>
-        <p className="text-stone-500 mb-3">{cs?"Zkopírujte ruský text a vložte ho na Prisonmail.online. Budete potřebovat e-mail a platební kartu (uzbecká banka, platba v UZS).":"Copy the Russian text to Prisonmail.online. You will need an email and payment card (Uzbek bank, payment in UZS)."}</p>
-        <div className="flex gap-2 flex-wrap">
-          <a href="https://prisonmail.online" target="_blank" className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold inline-block" style={{fontFamily:"system-ui"}}>Prisonmail.online (od $1.5/str.)</a>
-        </div>
+        <p className="text-stone-500 mb-3">{cs?"Zkopírujte ruský text a vložte ho na Prisonmail.online. Budete potřebovat e-mail a platební kartu.":"Copy the Russian text to Prisonmail.online. You will need an email and payment card."}</p>
+        <a href="https://prisonmail.online" target="_blank" className="bg-red-700 text-white px-4 py-2 rounded text-xs font-bold inline-block mb-3" style={{fontFamily:"system-ui"}}>Prisonmail.online (od $1.5/str.)</a>
+        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold mt-1 hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {cs?"Podrobný návod krok za krokem":"Detailed step-by-step guide"}</button>
+        {showGuide&&<div className="mt-3 space-y-2 text-stone-600 text-xs leading-relaxed">
+          <div className="bg-white rounded p-3 border"><strong>1.</strong> {cs?"Zkontrolujte, zda věznice adresáta je napojena na prisonmail.online. Ne všechny věznice jsou napojeny.":"Check if the prisoner's facility is connected to prisonmail.online. Not all are."}</div>
+          <div className="bg-white rounded p-3 border"><strong>2.</strong> {cs?"Připravte si dopis v ruštině. Maximální délka: 21 000 znaků včetně mezer.":"Prepare your letter in Russian. Maximum length: 21,000 characters including spaces."}</div>
+          <div className="bg-white rounded p-3 border"><strong>3.</strong> {cs?"Na prisonmail.online vyberte oblast, kde se věznice nachází, a pak konkrétní věznici.":"On prisonmail.online, select the region where the prison is located, then the specific facility."}</div>
+          <div className="bg-white rounded p-3 border"><strong>4.</strong> {cs?"Vyplňte údaje o vězni: příjmení, jméno, jméno po otci a rok narození — vše rusky, bez chyb.":"Enter the prisoner's details: last name, first name, middle name, and year of birth — all in Russian, without errors."}</div>
+          <div className="bg-white rounded p-3 border"><strong>5.</strong> {cs?"Vyplňte své údaje: jméno, telefon a e-mail (klidně latinkou, bez diakritiky). E-mail musí fungovat — sem přijdou odpovědi.":"Enter your details: name, phone, and email (Latin script OK, no diacritics). Email must work — replies come here."}</div>
+          <div className="bg-white rounded p-3 border"><strong>6.</strong> {cs?"Vložte text dopisu. Volitelně zaškrtněte odpověď (+$1.5) a/nebo obrázek (+$1.5). Obrázek cenzor vytiskne černobíle — může to být příroda, zvířata, fotka města, kresba (nic politického).":"Paste your letter text. Optionally check reply (+$1.5) and/or image (+$1.5). The censor prints images in B&W — nature, animals, city photos, drawings are fine (nothing political)."}</div>
+          <div className="bg-white rounded p-3 border"><strong>7.</strong> {cs?"Zkontrolujte údaje a zaplaťte. Cena: $1.5 za stránku textu + volitelné příplatky. Platbu zpracovává uzbecká banka (Octobank), částka se zobrazí v UZS.":"Check details and pay. Price: $1.5 per page + optional extras. Payment processed by Uzbek bank (Octobank), amount shown in UZS."}</div>
+          <div className="bg-white rounded p-3 border"><strong>8.</strong> {cs?"Po odeslání dostanete e-mailem potvrzení. Další mail přijde, až bude dopis předán adresátovi. Pokud jste zaplatili odpověď, přijde naskenovaná mailem.":"You will receive email confirmation after sending. Another email arrives when the letter is delivered. If you paid for a reply, it comes scanned via email."}</div>
+        </div>}
       </>:<>
-        <p className="text-stone-500 mb-2">{cs?"Klasická pošta — osobnější, ale trvá 1-2 měsíce. Obálka max 99g. Posílat ekonomicky (48 Kč), NE doporučeně. Adresu napsat v azbuce, zemi uvést anglicky RUSSIA.":"Regular mail — more personal, takes 1-2 months. Envelope max 99g. Send economy class (48 CZK), NOT registered. Address in Cyrillic, country in English: RUSSIA."}</p>
-        {pr.ad&&<div className="bg-white border rounded p-3 font-mono text-xs mb-2">{pr.ad}<br/>RUSSIA</div>}
+        <p className="text-stone-500 mb-3">{cs?"Klasická pošta — osobnější, ale trvá 1–2 měsíce. Obálka max 99g. Posílat ekonomicky (48 Kč), NE doporučeně.":"Regular mail — more personal, takes 1–2 months. Envelope max 99g. Send economy class (48 CZK), NOT registered."}</p>
+        {pr.ad&&<div className="bg-white border rounded p-3 font-mono text-xs mb-3">{pr.ad}<br/>RUSSIA</div>}
+        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {cs?"Podrobný návod krok za krokem":"Detailed step-by-step guide"}</button>
+        {showGuide&&<div className="mt-3 space-y-2 text-stone-600 text-xs leading-relaxed">
+          <div className="bg-white rounded p-3 border"><strong>1.</strong> {cs?"Připravte dopis v ruštině — buď přepsaný rukou, nebo vytištěný. Na konci uveďte datum napsání.":"Prepare your letter in Russian — either handwritten or printed. Include the date at the end."}</div>
+          <div className="bg-white rounded p-3 border"><strong>2.</strong> {cs?"Doporučujeme si dopis ofotit nebo zkopírovat — hodí se, pokud přijde odpověď.":"We recommend photographing or copying your letter — useful if you get a reply."}</div>
+          <div className="bg-white rounded p-3 border"><strong>3.</strong> {cs?"Vložte dopis do obálky. Můžete přidat: čistý papír, obrázek, fotku, pohlednici, prázdnou obálku s vaší zpáteční adresou (pro snazší odpověď).":"Put the letter in an envelope. You can add: blank paper, a picture, photo, postcard, empty envelope with your return address (for easier reply)."}</div>
+          <div className="bg-white rounded p-3 border"><strong>4.</strong> {cs?"Doporučujeme vložit Připomínku pro ruské cenzory (text níže) — citace z ruských zákonů o právu vězňů na korespondenci.":"We recommend including a Reminder for Russian censors (text below) — citations from Russian law on prisoners' correspondence rights."}</div>
+          <div className="bg-white rounded p-3 border"><strong>5.</strong> {cs?"Nadepište obálku: adresa vězně vpravo dole (v azbuce), známka vpravo nahoře (min 3×3 cm místa), vaše adresa vlevo nahoře (česky). Na konec adresy vězně napište RUSSIA.":"Address the envelope: prisoner's address bottom right (in Cyrillic), stamp top right (min 3×3 cm space), your address top left (in your language). Write RUSSIA at the end of the prisoner's address."}</div>
+          <div className="bg-white rounded p-3 border"><strong>6.</strong> {cs?"Pokud si nejste jistí azbukou, adresu vytiskněte a nalepte na obálku.":"If unsure about Cyrillic, print the address and stick it on the envelope."}</div>
+          <div className="bg-white rounded p-3 border"><strong>7.</strong> {cs?"Odešlete ekonomicky na kterékoliv pobočce České pošty. Cena: 48 Kč (do 50g). Doporučeně NEPOSÍLEJTE — může vězni způsobit problémy.":"Send economy class at any Czech Post office. Price: 48 CZK (up to 50g). Do NOT send registered — it can cause problems for the prisoner."}</div>
+          <div className="bg-white rounded p-3 border"><strong>8.</strong> {cs?"Odpověď přijde klasickou poštou do vaší schránky. Počítejte s 1–2 měsíci na cestu tam i zpět.":"Reply arrives by regular mail to your mailbox. Expect 1–2 months for delivery each way."}</div>
+          <div className="bg-white rounded p-3 border border-amber-200 bg-amber-50 mt-3">
+            <div className="font-bold text-amber-800 mb-1" style={{fontFamily:"system-ui"}}>{cs?"Připomínka pro ruské cenzory":"Reminder for Russian censors"}</div>
+            <div className="text-[11px] text-stone-500 italic leading-relaxed">{cs?"Následující text doporučujeme vytisknout a vložit do obálky s dopisem:":"We recommend printing the following text and including it in the envelope:"}</div>
+            <div className="mt-2 bg-white border rounded p-2 text-[10px] text-stone-600 font-mono leading-relaxed whitespace-pre-wrap">{"УИК РФ ст. 91: Осуждённым разрешается получать и отправлять письма и почтовые карточки без ограничения их количества. Срок цензуры — не более 3 рабочих дней, для иностранного языка — не более 7 дней.\n\nФЗ № 103-ФЗ ст. 20: Подозреваемым и обвиняемым разрешается вести переписку без ограничения числа писем.\n\nВ случае перевода адресата в другое учреждение прошу переслать это письмо по месту его/её убытия согласно требованиям ст. 30 ФЗ № 103-ФЗ."}</div>
+          </div>
+          <div className="bg-white rounded p-3 border border-blue-200 bg-blue-50 mt-3">
+            <div className="font-bold text-blue-800 mb-1" style={{fontFamily:"system-ui"}}>{cs?"Vzor obálky":"Envelope template"}</div>
+            <div className="mt-2 text-[11px] text-stone-600 leading-relaxed">
+              <div className="bg-white border-2 border-stone-300 rounded p-4 relative" style={{minHeight:"140px"}}>
+                <div className="text-[10px] text-stone-400 italic">{cs?"Vlevo nahoře — vaše adresa (česky):":"Top left — your address:"}</div>
+                <div className="text-[10px] text-stone-500">Jan Novák, Lipová 5, 110 00 Praha, CZECHIA</div>
+                <div className="absolute top-2 right-2 border border-stone-300 rounded w-10 h-10 flex items-center justify-center text-[8px] text-stone-400">{cs?"ZNÁMKA":"STAMP"}</div>
+                <div className="mt-8 text-right">
+                  <div className="text-[10px] text-stone-400 italic">{cs?"Vpravo dole — adresa vězně (azbukou):":"Bottom right — prisoner address (Cyrillic):"}</div>
+                  {pr.ad?<div className="text-[10px] text-stone-700 font-mono">{pr.ad}<br/>RUSSIA</div>:<div className="text-[10px] text-stone-500 italic">{cs?"Příjmení Jméno Otčestvo, rok nar., název věznice, ulice, město, oblast, PSČ":"Last First Middle, birth year, prison name, street, city, region, postal code"}<br/>RUSSIA</div>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>}
       </>}
     </div>}
   </div>);
