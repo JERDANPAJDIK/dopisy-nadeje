@@ -515,7 +515,8 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     </div>
     {result&&<div className="bg-white border border-stone-200 rounded-lg p-5 mt-4">
-      <div className="bg-stone-50 border rounded p-4 text-sm leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto">{result}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte text podle potřeby":"✏️ Edit the text as needed"}</div>
+      <textarea value={result} onChange={e=>setResult(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[200px] max-h-[400px] resize-y outline-none focus:border-red-600"/>
       <div className="flex gap-2 mt-3 flex-wrap">
         <button onClick={()=>cp(result)} className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
         {!saved&&<button onClick={save} className="bg-stone-200 text-stone-700 px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>💾 {cs?"Uložit do sbírky":"Save to collection"}</button>}
@@ -524,7 +525,8 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
     </div>}
     {trans&&<div className="bg-white border border-stone-200 rounded-lg p-5 mt-4">
       <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"Ruská verze":"Russian version"}</div>
-      <div className="bg-stone-50 border rounded p-4 text-sm leading-relaxed whitespace-pre-wrap">{trans}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte překlad podle potřeby":"✏️ Edit translation as needed"}</div>
+      <textarea value={trans} onChange={e=>setTrans(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[120px] max-h-[300px] resize-y outline-none focus:border-red-600"/>
       <button onClick={()=>cp(trans)} className="mt-3 bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
     </div>}
     {(result||trans)&&<div className="bg-stone-50 border border-dashed border-stone-300 rounded-lg p-4 mt-4 text-sm">
