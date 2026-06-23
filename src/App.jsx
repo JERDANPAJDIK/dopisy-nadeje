@@ -86,13 +86,10 @@ const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
 RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
 TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
 RULES (read by prison censor):
-1. Output ${l==="cs"?"Czech":"English"} version then Russian version
+1. Output ONLY in ${l==="cs"?"Czech":"English"} — do NOT include Russian translation
 2. NO politics/war/Ukraine 3. NO LGBTQ+ 4. Don't comment on their case
 5. No profanity 6. NOT sad, don't pity 7. DO: introduce yourself, share positive life, wish strength
-## ${l==="cs"?"Česká verze":"English version"}
-[text]
-## Русская версия
-[text]`;
+Write the letter directly, no headers or labels.`;
 
 const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":"English"}.`;
 const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
@@ -447,7 +444,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Kontroluji...":"Checking...");setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Překládám...":"Translating...");setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
-  const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(cs?"Překládám upravenou verzi...":"Translating edited version...");setErr("");setTrans("");try{const r=await ai(apiKey,"The user edited a letter to a Russian political prisoner. The text may contain both Czech/English and Russian parts. Extract ONLY the Czech or English parts (ignore any existing Russian translation), then translate them to natural warm Russian. Output ONLY the Russian translation, nothing else.",result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(cs?"Překládám upravenou verzi...":"Translating edited version...");setErr("");setTrans("");try{const r=await ai(apiKey,sT,result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tips=cs?["Jsem učitel/ka a zajímám se o vzdělávání","Rád/a čtu knihy a chodím do přírody","Jsem student/ka, píšu poprvé","Chci jen popřát hodně sil","Zajímám se o historii"]:["I'm a teacher interested in education","I love reading and nature","I'm a student, first time writing","Just want to wish them strength","I'm into history"];
 
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
@@ -516,7 +513,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     </div>
     {result&&<div className="bg-white border border-stone-200 rounded-lg p-5 mt-4">
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte text podle potřeby":"✏️ Edit the text as needed"}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte text a pak klikněte Přeložit do ruštiny":"✏️ Edit the text, then click Translate to Russian"}</div>
       <textarea value={result} onChange={e=>setResult(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[200px] max-h-[400px] resize-y outline-none focus:border-red-600"/>
       <div className="flex gap-2 mt-3 flex-wrap">
         <button onClick={()=>cp(result)} className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
