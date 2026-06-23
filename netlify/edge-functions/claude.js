@@ -74,7 +74,7 @@ async function handleGeminiStream(apiKey, system, messages) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { thinkingConfig: { thinkingBudget: 0 } } }),
     }
   );
 
