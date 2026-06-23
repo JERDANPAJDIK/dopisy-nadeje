@@ -16,7 +16,7 @@ export default async (req, context) => {
   const anthropicKey = Netlify.env.get("ANTHROPIC_API_KEY");
   const geminiKey = Netlify.env.get("GEMINI_KEY");
   if (!anthropicKey) {
-    return new Response(JSON.stringify({ error: { message: "Missing API key" } }), {
+    return new Response(JSON.stringify({ error: { message: "Missing ANTHROPIC_API_KEY" } }), {
       status: 500, headers: { "Content-Type": "application/json" },
     });
   }
@@ -77,7 +77,22 @@ async function handleGemini(apiKey, system, messages) {
     }
   );
   const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini";
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    const errDetail = data?.error?.message || JSON.stringify(data).substring(0, 300);
+    const errSse = [
+      "event: content_block_delta",
+      `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify("Gemini error: " + errDetail)}}}`,
+      "",
+      "event: message_stop",
+      'data: {"type":"message_stop"}',
+      "",
+    ].join("\n");
+    return new Response(errSse, {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+    });
+  }
   const sse = [
     "event: content_block_delta",
     `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify(text)}}}`,
