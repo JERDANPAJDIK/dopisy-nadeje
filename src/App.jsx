@@ -86,14 +86,14 @@ const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
 RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
 TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
 RULES (read by prison censor):
-1. Output ONLY in ${l==="cs"?"Czech":"English"} — do NOT include Russian translation
+1. Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation
 2. NO politics/war/Ukraine 3. NO LGBTQ+ 4. Don't comment on their case
 5. No profanity 6. NOT sad, don't pity 7. DO: introduce yourself, share positive life, wish strength
 Write the letter directly, no headers or labels.`;
 
-const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":"English"}.`;
+const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
 const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
-const sO=(l)=>`OCR+translate handwritten Russian letter. Output:\n## Ruský originál\n[text]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation]\nMark illegible [...].`;
+const sO=(l)=>`OCR+translate handwritten Russian letter. Output:\n## Ruský originál\n[text]\n## ${l==="cs"?"Český překlad":l==="ru"?"Перевод на русский":"English translation"}\n[translation]\nMark illegible [...].`;
 const sM=(l)=>`You help match people with political prisoners to write letters to.
 Here is the database of prisoners (JSON): ${JSON.stringify(P.filter(p=>p.o).map(p=>({id:p.i,name:p.ne,age:p.a,prof:p.pe,interests:p.ie,case:p.de,sentence:p.se})))}
 Based on the user's description of themselves, recommend 3 prisoners who would be the best match. For each, explain WHY they're a good match in 1-2 warm, specific sentences.
@@ -121,6 +121,8 @@ export default function App(){
   useEffect(()=>{try{localStorage.setItem("dopisy-nadeje-letters",JSON.stringify(letters));}catch(e){}},[letters]);
   const [composeBack,setComposeBack]=useState("home");
   const cs=lang==="cs";
+  const ru=lang==="ru";
+  const t=(c,e,r)=>lang==="cs"?c:lang==="ru"?r:e;
   const home=()=>{setScr("home");setSel(null);};
   const needKey=(cb)=>{cb();};
   const addLetter=(pr,txt,dt)=>setLetters(prev=>[{pr,txt,dt:dt||new Date().toLocaleDateString()},...prev]);
@@ -131,11 +133,12 @@ export default function App(){
       <nav className="sticky top-0 z-50 text-stone-100 flex items-center justify-between px-4 h-14 border-b-2 border-red-700" style={{backgroundColor:"#353A40"}}>
         <a href="https://gulag.cz" target="_blank" aria-label="Gulag.cz"><Logo/></a>
         <div className="flex items-center gap-2">
-          <button onClick={home} className="text-stone-400 hover:text-white text-sm" aria-label="Domů" title={cs?"Domů":"Home"}>⌂</button>
+          <button onClick={home} className="text-stone-400 hover:text-white text-sm" aria-label="Domů" title={t("Domů","Home","Главная")}>⌂</button>
           {letters.length>0&&<button onClick={()=>setScr("collection")} className="text-stone-400 hover:text-white text-xs px-2 py-1 border border-stone-700 rounded" style={{fontFamily:"system-ui"}}>📬 {letters.length}</button>}
           <div className="flex bg-stone-800 rounded overflow-hidden">
             <button onClick={()=>setLang("cs")} className={`px-3 py-1 text-xs font-bold ${lang==="cs"?"bg-red-700 text-white":"text-stone-400"}`}>CZ</button>
             <button onClick={()=>setLang("en")} className={`px-3 py-1 text-xs font-bold ${lang==="en"?"bg-red-700 text-white":"text-stone-400"}`}>EN</button>
+            <button onClick={()=>setLang("ru")} className={`px-3 py-1 text-xs font-bold ${lang==="ru"?"bg-red-700 text-white":"text-stone-400"}`}>RU</button>
           </div>
           
         </div>
@@ -156,10 +159,10 @@ export default function App(){
           <div className="flex flex-col md:flex-row gap-8 mb-8">
             <div className="flex-1">
               <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="inline-block mb-4"><Logo/></a>
-              <p className="leading-relaxed text-stone-400 text-sm">{cs?"Mapujeme historii represí v SSSR. Dokumentujeme pozůstatky Gulagu. Vyprávíme příběhy obětí. Monitorujeme perzekuce v Rusku.":"We map the history of repression in the USSR. Document Gulag remains. Tell victims' stories. Monitor persecution in Russia."}</p>
+              <p className="leading-relaxed text-stone-400 text-sm">{t("Mapujeme historii represí v SSSR. Dokumentujeme pozůstatky Gulagu. Vyprávíme příběhy obětí. Monitorujeme perzekuce v Rusku.","We map the history of repression in the USSR. Document Gulag remains. Tell victims' stories. Monitor persecution in Russia.","Исследуем историю репрессий в СССР. Документируем остатки ГУЛАГа. Рассказываем истории жертв. Мониторим преследования в России.")}</p>
               </div>
             <div className="flex-1">
-              <div className="font-bold text-white mb-3 text-sm">{cs?"Kontakt":"Contact"}</div>
+              <div className="font-bold text-white mb-3 text-sm">{t("Kontakt","Contact","Контакты")}</div>
               <a href="mailto:info@gulag.cz" className="block text-stone-400 hover:text-white mb-1">info@gulag.cz</a>
               <a href="tel:+420725787527" className="block text-stone-400 hover:text-white mb-4">+420 725 787 527</a>
               <div className="flex gap-2">
@@ -178,23 +181,23 @@ export default function App(){
               </div>
             </div>
             <div className="flex-1">
-              <div className="font-bold text-white mb-3 text-sm">{cs?"Spolupráce":"Partnership"}</div>
-              <p className="leading-relaxed text-stone-400 text-xs">{cs?"Databáze vězňů vychází z dat ":"Prisoner database based on data from "}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Memorial</a>{cs?" a ":"  and "}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>{cs?".":"."}</p>
+              <div className="font-bold text-white mb-3 text-sm">{t("Spolupráce","Partnership","Партнёры")}</div>
+              <p className="leading-relaxed text-stone-400 text-xs">{t("Databáze vězňů vychází z dat ","Prisoner database based on data from ","База заключённых основана на данных ")}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Memorial</a>{t(" a ","  and "," и ")}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>{t(".",".",".")}</p>
             </div>
           </div>
           <div className="border-t border-stone-700 pt-5 flex flex-col sm:flex-row justify-between gap-2 text-stone-500 text-[11px]">
-            <div>© 2026 <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300">Gulag.cz</a> · {cs?"Všechna práva vyhrazena":"All rights reserved"}</div>
-            <div>{cs?"Děkujeme za podporu Erasmus+, MZV ČR a Alza.cz":"Supported by Erasmus+, Czech MFA and Alza.cz"}</div>
+            <div>© 2026 <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300">Gulag.cz</a> · {t("Všechna práva vyhrazena","All rights reserved","Все права защищены")}</div>
+            <div>{t("Děkujeme za podporu Erasmus+, MZV ČR a Alza.cz","Supported by Erasmus+, Czech MFA and Alza.cz","При поддержке Erasmus+, МИД ЧР и Alza.cz")}</div>
           </div>
         </div>
       </footer>
 
       {showKey&&<div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={()=>setShowKey(false)}>
         <div className="bg-white rounded-lg p-6 max-w-sm w-full" onClick={e=>e.stopPropagation()}>
-          <h3 className="font-bold text-lg mb-2" style={{fontFamily:"system-ui"}}>{cs?"Anthropic API klíč":"Anthropic API key"}</h3>
-          <p className="text-sm text-stone-500 mb-3">{cs?"Klíč zůstane jen v této relaci.":"Key stays in this session only."}</p>
+          <h3 className="font-bold text-lg mb-2" style={{fontFamily:"system-ui"}}>{t("Anthropic API klíč","Anthropic API key","Ключ Anthropic API")}</h3>
+          <p className="text-sm text-stone-500 mb-3">{t("Klíč zůstane jen v této relaci.","Key stays in this session only.","Ключ сохраняется только в этой сессии.")}</p>
           <input type="password" value={tmpKey} onChange={e=>setTmpKey(e.target.value)} placeholder="sk-ant-..." className="w-full border rounded p-2 font-mono text-sm mb-3"/>
-          <button onClick={()=>{setKey(tmpKey);setShowKey(false);}} className="w-full bg-red-700 text-white py-2 rounded font-bold hover:bg-red-800">{cs?"Uložit":"Save"}</button>
+          <button onClick={()=>{setKey(tmpKey);setShowKey(false);}} className="w-full bg-red-700 text-white py-2 rounded font-bold hover:bg-red-800">{t("Uložit","Save","Сохранить")}</button>
         </div>
       </div>}
     </div>
@@ -217,16 +220,16 @@ function Home({cs,go,pickRandom}){
         <div className="md:max-w-xl">
           <div className="inline-flex items-center gap-2 bg-red-700/20 border border-red-700/40 rounded-full px-3 py-1 mb-5">
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"/>
-            <span className="text-red-300 text-[10px] font-bold tracking-[2px] uppercase" style={{fontFamily:"system-ui"}}>2 136 {cs?"vězňů":"prisoners"} · {cs?"Rusko":"Russia"} · 2026</span>
+            <span className="text-red-300 text-[10px] font-bold tracking-[2px] uppercase" style={{fontFamily:"system-ui"}}>2 136 {t("vězňů","prisoners","заключённых")} · {t("Rusko","Russia","Россия")} · 2026</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-5" style={{fontFamily:"system-ui",lineHeight:1.0,letterSpacing:"-0.02em"}}>{cs?"Napište dopis.":"Write a letter."}<br/><span className="text-red-400">{cs?"Změňte něčí den.":"Change someone's day."}</span></h1>
-          <p className="text-white text-base leading-relaxed mb-2 max-w-md font-medium" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{cs?"V ruských věznicích sedí přes 2 100 lidí za své politické názory.":"Over 2,100 people sit in Russian prisons for their political views."}</p>
-          <p className="text-stone-200 text-sm leading-relaxed mb-7 max-w-md" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{cs?"Najdeme vám vhodného adresáta. Pomůžeme napsat dopis v češtině i ruštině. Zkontrolujeme pravidla cenzury. Poradíme s odesláním.":"We help you find a recipient. Write a letter in your language and Russian. Check censorship rules. Guide you through sending."}</p>
+          <h1 className="text-4xl md:text-6xl font-bold mb-5" style={{fontFamily:"system-ui",lineHeight:1.0,letterSpacing:"-0.02em"}}>{t("Napište dopis.","Write a letter.","Напишите письмо.")}<br/><span className="text-red-400">{t("Změňte něčí den.","Change someone's day.","Измените чей-то день.")}</span></h1>
+          <p className="text-white text-base leading-relaxed mb-2 max-w-md font-medium" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{t("V ruských věznicích sedí přes 2 100 lidí za své politické názory.","Over 2,100 people sit in Russian prisons for their political views.","Более 2 100 человек находятся в российских тюрьмах за свои политические взгляды.")}</p>
+          <p className="text-stone-200 text-sm leading-relaxed mb-7 max-w-md" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{t("Najdeme vám vhodného adresáta. Pomůžeme napsat dopis v češtině i ruštině. Zkontrolujeme pravidla cenzury. Poradíme s odesláním.","We help you find a recipient. Write a letter in your language and Russian. Check censorship rules. Guide you through sending.","Поможем найти адресата. Проверим письмо на соответствие правилам цензуры. Подскажем, как отправить.")}</p>
           <button onClick={()=>go("match")} className="bg-red-600 hover:bg-red-700 text-white px-7 py-4 rounded-lg transition-all shadow-2xl hover:shadow-red-900/50 group inline-flex items-center gap-4">
             <span className="text-2xl">✨</span>
             <span className="text-left">
-              <div className="font-bold text-base leading-tight" style={{fontFamily:"system-ui"}}>{cs?"Začít — AI mi pomůže":"Start — AI helps me"}</div>
-              <div className="text-red-200 text-xs">{cs?"Doporučí adresáta i napíše dopis":"Recommends recipient and drafts letter"}</div>
+              <div className="font-bold text-base leading-tight" style={{fontFamily:"system-ui"}}>{t("Začít — AI mi pomůže","Start — AI helps me","Начать — ИИ поможет")}</div>
+              <div className="text-red-200 text-xs">{t("Doporučí adresáta i napíše dopis","Recommends recipient and drafts letter","Подберёт адресата и составит письмо")}</div>
             </span>
             <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
           </button>
@@ -237,13 +240,13 @@ function Home({cs,go,pickRandom}){
     {/* HOW IT WORKS - 3 steps */}
     <section className="bg-white border-b border-stone-200 px-4 py-12">
       <div className="max-w-5xl mx-auto">
-        <p className="text-red-700 text-[10px] font-bold tracking-[3px] uppercase mb-2 text-center" style={{fontFamily:"system-ui"}}>{cs?"Jak to funguje":"How it works"}</p>
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Tři kroky k napsání dopisu":"Three steps to writing a letter"}</h2>
+        <p className="text-red-700 text-[10px] font-bold tracking-[3px] uppercase mb-2 text-center" style={{fontFamily:"system-ui"}}>{t("Jak to funguje","How it works","Как это работает")}</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Tři kroky k napsání dopisu","Three steps to writing a letter","Три шага к написанию письма")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            {n:"01",t:cs?"Najděte adresáta":"Find a recipient",d:cs?"AI vám doporučí vězně podle vašich zájmů a profese, nebo si vyberete sami z databáze 30+ politických vězňů.":"AI recommends a prisoner based on your interests, or pick yourself from a database of 30+ political prisoners."},
-            {n:"02",t:cs?"Napište dopis":"Write a letter",d:cs?"Napište vlastní text, nebo nechte AI připravit návrh. Systém vždy zkontroluje pravidla cenzury, abyste neriskovali zabavení.":"Write your own text, or let AI draft it. Either way, the system checks censorship rules to avoid confiscation."},
-            {n:"03",t:cs?"Odešlete":"Send it",d:cs?"Online přes Prisonmail.online (od $1.5/stránku) nebo klasickou poštou (48 Kč). Nástroj vás provede.":"Online via Prisonmail.online (from $1.5/page) or by regular mail (48 CZK). Tool guides you through it."},
+            {n:"01",t:t("Najděte adresáta","Find a recipient","Найдите адресата"),d:t("AI vám doporučí vězně podle vašich zájmů a profese, nebo si vyberete sami z databáze 30+ politických vězňů.","AI recommends a prisoner based on your interests, or pick yourself from a database of 30+ political prisoners.","ИИ подберёт политзаключённого по вашим интересам и профессии, или вы можете выбрать самостоятельно из базы 30+ человек.")},
+            {n:"02",t:t("Napište dopis","Write a letter","Напишите письмо"),d:t("Napište vlastní text, nebo nechte AI připravit návrh. Systém vždy zkontroluje pravidla cenzury, abyste neriskovali zabavení.","Write your own text, or let AI draft it. Either way, the system checks censorship rules to avoid confiscation.","Напишите текст сами или доверьте это ИИ. Система проверит текст на соответствие правилам тюремной цензуры.")},
+            {n:"03",t:t("Odešlete","Send it","Отправьте"),d:t("Online přes Prisonmail.online (od $1.5/stránku) nebo klasickou poštou (48 Kč). Nástroj vás provede.","Online via Prisonmail.online (from $1.5/page) or by regular mail (48 CZK). Tool guides you through it.","Онлайн через Prisonmail.online (от $1.5 за страницу) или обычной почтой. Инструмент проведёт вас через все шаги.")},
           ].map((s,i)=>
             <div key={i} className="relative">
               <div className="text-red-100 text-7xl font-black absolute -top-4 -left-2 leading-none select-none" style={{fontFamily:"system-ui"}}>{s.n}</div>
@@ -260,32 +263,32 @@ function Home({cs,go,pickRandom}){
     {/* ALTERNATIVE ACTIONS - prominent */}
     <section className="px-4 py-12" style={{backgroundColor:"#f5f4f0"}}>
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-xl font-bold text-center mb-8 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Začněte podle svého":"Start your own way"}</h2>
+        <h2 className="text-xl font-bold text-center mb-8 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Začněte podle svého","Start your own way","Начните по-своему")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <button onClick={()=>go("choose")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📋</div>
-            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Procházet vězně":"Browse prisoners"}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{cs?`Projděte si ${P.filter(p=>p.o).length} profilů, filtrujte podle zájmů a témat.`:`Browse ${P.filter(p=>p.o).length} profiles, filter by interests and topics.`}</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Procházet vězně","Browse prisoners","Просмотреть заключённых")}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{lang==="cs"?`Projděte si ${P.filter(p=>p.o).length} profilů, filtrujte podle zájmů a témat.`:lang==="ru"?`Просмотрите ${P.filter(p=>p.o).length} профилей, фильтруйте по интересам и темам.`:`Browse ${P.filter(p=>p.o).length} profiles, filter by interests and topics.`}</div>
           </button>
           <button onClick={()=>{const online=P.filter(p=>p.o);pickRandom(online[Math.floor(Math.random()*online.length)]);}} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">🎲</div>
-            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Náhodný adresát":"Random recipient"}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{cs?"Systém vám vybere někoho, kdo dopisy potřebuje nejvíc.":"System picks someone who needs letters the most."}</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Náhodný adresát","Random recipient","Случайный адресат")}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{t("Systém vám vybere někoho, kdo dopisy potřebuje nejvíc.","System picks someone who needs letters the most.","Система выберет того, кто больше всего нуждается в письмах.")}</div>
           </button>
           <button onClick={()=>go("scan")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📷</div>
-            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Přeložit odpověď":"Translate reply"}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{cs?"Dostali jste ruskou odpověď? Nahrajte sken, AI ji přeloží.":"Got a Russian reply? Upload scan, AI translates it."}</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Přeložit odpověď","Translate reply","Перевести ответ")}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{t("Dostali jste ruskou odpověď? Nahrajte sken, AI ji přeloží.","Got a Russian reply? Upload scan, AI translates it.","Получили рукописный ответ? Загрузите скан, ИИ распознает и переведёт.")}</div>
           </button>
           <button onClick={()=>go("collection")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📬</div>
-            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Moje dopisy":"My letters"}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{cs?"Archiv všech dopisů, které jste odeslali přes tento nástroj.":"Archive of all letters you've sent via this tool."}</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Moje dopisy","My letters","Мои письма")}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{t("Archiv všech dopisů, které jste odeslali přes tento nástroj.","Archive of all letters you've sent via this tool.","Архив всех писем, которые вы составили с помощью этого инструмента.")}</div>
           </button>
           <button onClick={()=>go("faq")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group sm:col-span-2 lg:col-span-1">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">❓</div>
-            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Časté dotazy":"FAQ"}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{cs?"Odpovědi na nejčastější otázky o psaní dopisů politickým vězňům.":"Answers to the most common questions about writing to political prisoners."}</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Časté dotazy","FAQ","Частые вопросы")}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{t("Odpovědi na nejčastější otázky o psaní dopisů politickým vězňům.","Answers to the most common questions about writing to political prisoners.","Ответы на самые частые вопросы о переписке с политзаключёнными.")}</div>
           </button>
         </div>
       </div>
@@ -296,16 +299,16 @@ function Home({cs,go,pickRandom}){
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-center gap-3 mb-3">
           <div className="h-px w-12 bg-red-700"/>
-          <p className="text-red-700 text-[10px] font-bold tracking-[3px] uppercase" style={{fontFamily:"system-ui"}}>{cs?"Hlasy z vězení":"Voices from prison"}</p>
+          <p className="text-red-700 text-[10px] font-bold tracking-[3px] uppercase" style={{fontFamily:"system-ui"}}>{t("Hlasy z vězení","Voices from prison","Голоса из тюрьмы")}</p>
           <div className="h-px w-12 bg-red-700"/>
         </div>
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-3 text-stone-800" style={{fontFamily:"system-ui",letterSpacing:"-0.02em"}}>{cs?"Dopisy přicházejí. Odpovědi se vracejí.":"Letters arrive. Replies come back."}</h2>
-        <p className="text-stone-500 text-base text-center max-w-2xl mx-auto mb-12 leading-relaxed">{cs?"Skutečné odpovědi od politických vězňů v Rusku českým a evropským pisatelům.":"Real replies from political prisoners in Russia to Czech and European writers."}</p>
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-3 text-stone-800" style={{fontFamily:"system-ui",letterSpacing:"-0.02em"}}>{t("Dopisy přicházejí. Odpovědi se vracejí.","Letters arrive. Replies come back.","Письма доходят. Ответы приходят.")}</h2>
+        <p className="text-stone-500 text-base text-center max-w-2xl mx-auto mb-12 leading-relaxed">{t("Skutečné odpovědi od politických vězňů v Rusku českým a evropským pisatelům.","Real replies from political prisoners in Russia to Czech and European writers.","Реальные ответы политзаключённых в России тем, кто написал им письма поддержки.")}</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            {n:cs?"Anastasija":"Anastasia",ag:47,t:cs?"Drahá Káťo, díky moc za dopis! Jste velmi krásná. Ve vězení, dokud je možnost, kreslím tužkami i barevnými. Učím se finštinu, čtu Remarqua, Orwella, Marquéze…":"Dear Katya, thank you for your letter. You are very beautiful. In prison, while I can, I draw with pencils. I'm learning Finnish, reading Remarque, Orwell, Marquéz…",c:cs?"S kresbou ženy v dopise":"With a drawing in the letter"},
-            {n:"Eduard",ag:60,t:cs?"Vážená Mario! Z dopisu jsem pochopil, že si umíte vážit jednoduchých věcí, být vděčná. Také mi došlo, že nejste lhostejný člověk…":"Dear Maria! From your letter I understood you can appreciate simple things, be grateful. I also learned you are not an indifferent person…",c:cs?"Vladimirská oblast":"Vladimir region"},
-            {n:"Konstantin",ag:33,t:cs?"Ahoj, Alexandře! Díky za dopis, ještě z tak vzdálených krajů. Jakmile jsem si přečetl, že jste z Rakouska, vybavil se mi spisovatel Remarque…":"Hello Alexander! Thanks for the letter, from such distant lands. When I read you're from Austria, I recalled writer Remarque…",c:cs?"Pro pisatele z Vídně":"For a writer from Vienna"},
+            {n:t("Anastasija","Anastasia","Анастасия"),ag:47,t:t("Drahá Káťo, díky moc za dopis! Jste velmi krásná. Ve vězení, dokud je možnost, kreslím tužkami i barevnými. Učím se finštinu, čtu Remarqua, Orwella, Marquéze…","Dear Katya, thank you for your letter. You are very beautiful. In prison, while I can, I draw with pencils. I'm learning Finnish, reading Remarque, Orwell, Marquéz…","Дорогая Катя, большое спасибо за письмо! Вы очень красивая. В тюрьме, пока человек жив, всегда есть надежда, что однажды он снова будет свободен. Спасибо, что вы неравнодушный человек."),c:t("S kresbou ženy v dopise","With a drawing in the letter","С рисунком в письме")},
+            {n:"Eduard",ag:60,t:t("Vážená Mario! Z dopisu jsem pochopil, že si umíte vážit jednoduchých věcí, být vděčná. Také mi došlo, že nejste lhostejný člověk…","Dear Maria! From your letter I understood you can appreciate simple things, be grateful. I also learned you are not an indifferent person…","Уважаемая Мария! Из письма я понял, что вы умеете ценить простые вещи в жизни. Это замечательное качество. Буду рад, если напишете снова."),c:t("Vladimirská oblast","Vladimir region","Владимирская область")},
+            {n:"Konstantin",ag:33,t:t("Ahoj, Alexandře! Díky za dopis, ještě z tak vzdálených krajů. Jakmile jsem si přečetl, že jste z Rakouska, vybavil se mi spisovatel Remarque…","Hello Alexander! Thanks for the letter, from such distant lands. When I read you're from Austria, I recalled writer Remarque…","Привет, Александр! Спасибо за письмо, да ещё из таких далёких краёв. Как только получила твоё письмо, почувствовала, что я не одна."),c:t("Pro pisatele z Vídně","For a writer from Vienna","Писавшему из Вены")},
           ].map((q,i)=>
             <figure key={i} className="bg-stone-50 rounded-2xl p-7 border border-stone-200 flex flex-col">
               <svg className="w-8 h-8 text-red-200 mb-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 6c-3 0-5.5 2.5-5.5 5.5v6.5h6v-6.5h-3c0-1.7 1.3-3 3-3v-2.5zm9 0c-3 0-5.5 2.5-5.5 5.5v6.5h6v-6.5h-3c0-1.7 1.3-3 3-3v-2.5z"/></svg>
@@ -317,7 +320,7 @@ function Home({cs,go,pickRandom}){
             </figure>
           )}
         </div>
-        <p className="text-stone-400 text-xs text-center mt-10 italic">{cs?"Úryvky z odpovědí politických vězňů":"Excerpts from political prisoners' replies"}</p>
+        <p className="text-stone-400 text-xs text-center mt-10 italic">{t("Úryvky z odpovědí politických vězňů","Excerpts from political prisoners' replies","Из ответов политзаключённых")}</p>
       </div>
     </section>
   </>);
@@ -330,23 +333,23 @@ function Choose({cs,lang,back,pick}){
   const list=P.filter(p=>{if(f==="f"&&p.g!=="f")return false;if(f==="m"&&p.g!=="m")return false;if(f==="y"&&p.a>30)return false;return fz(q,p,cs);});
   const ht=t=>{if(t.q==="f"||t.q==="m"){setF(t.q);setQ("");}else{setF("all");setQ(t.q);}};
   return(<div className="max-w-4xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {cs?"Zpět":"Back"}</button>
-    <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>{cs?"Vyberte adresáta":"Choose a recipient"}</h2>
-    <input value={q} onChange={e=>{setQ(e.target.value);setF("all");}} placeholder={cs?"Hledat — jméno, zájem, téma...":"Search — name, interest, topic..."} className="w-full border border-stone-200 rounded p-3 mb-3 text-sm outline-none focus:border-red-600"/>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
+    <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>{t("Vyberte adresáta","Choose a recipient","Выберите адресата")}</h2>
+    <input value={q} onChange={e=>{setQ(e.target.value);setF("all");}} placeholder={t("Hledat — jméno, zájem, téma...","Search — name, interest, topic...","Поиск — имя, интерес, тема...")} className="w-full border border-stone-200 rounded p-3 mb-3 text-sm outline-none focus:border-red-600"/>
     <div className="flex gap-1.5 flex-wrap mb-4">
-      <button onClick={()=>{setF("all");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${!q&&f==="all"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{cs?"Všichni":"All"} ({P.length})</button>
-      <button onClick={()=>{setF("f");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="f"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👩 {cs?"Ženy":"Women"}</button>
-      <button onClick={()=>{setF("m");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="m"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👨 {cs?"Muži":"Men"}</button>
-      <button onClick={()=>{setF("y");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="y"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>🧑 {cs?"Mladí":"Young"}</button>
+      <button onClick={()=>{setF("all");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${!q&&f==="all"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t("Všichni","All","Все")} ({P.length})</button>
+      <button onClick={()=>{setF("f");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="f"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👩 {t("Ženy","Women","Женщины")}</button>
+      <button onClick={()=>{setF("m");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="m"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👨 {t("Muži","Men","Мужчины")}</button>
+      <button onClick={()=>{setF("y");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="y"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>🧑 {t("Mladí","Young","Молодые")}</button>
       {tops.map(t=><button key={t.q} onClick={()=>ht(t)} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${q===t.q?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t.l}</button>)}
     </div>
-    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{list.length} {cs?"výsledků":"results"}</div>
-    {list.length===0?<p className="text-center text-stone-400 py-8">{cs?"Žádné výsledky. Zkuste jiný výraz.":"No results. Try different terms."}</p>:
+    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{list.length} {t("výsledků","results","результатов")}</div>
+    {list.length===0?<p className="text-center text-stone-400 py-8">{t("Žádné výsledky. Zkuste jiný výraz.","No results. Try different terms.","Нет результатов. Попробуйте другой запрос.")}</p>:
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(p=>
       <button key={p.i} onClick={()=>pick(p)} className="text-left bg-white border border-stone-200 rounded-lg p-4 hover:border-red-600 hover:shadow-md transition-all">
         <div className="flex items-start gap-3 mb-2">
           <div className="w-9 h-9 bg-stone-200 rounded-full flex items-center justify-center text-stone-500 font-bold text-xs flex-shrink-0" style={{fontFamily:"system-ui"}}>{(cs?p.n:p.ne).charAt(0)}</div>
-          <div><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{cs?p.n:p.ne}</div><div className="text-[11px] text-stone-400">{p.a} {cs?"let":"yo"} · {cs?p.p:p.pe}</div></div>
+          <div><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{cs?p.n:p.ne}</div><div className="text-[11px] text-stone-400">{p.a} {t("let","yo","лет")} · {cs?p.p:p.pe}</div></div>
         </div>
         <div className="text-[11px] text-red-700 font-medium mb-1" style={{fontFamily:"system-ui"}}>{cs?p.s:p.se}</div>
         <div className="text-xs text-stone-500 leading-relaxed">{cs?p.d:p.de}</div>
@@ -389,19 +392,19 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
   };
   const chips=cs?["Jsem učitel/ka, zajímá mě vzdělávání","Mám rád/a přírodu a knihy","Jsem student/ka, píšu poprvé","Zajímám se o IT a technologie","Jsem důchodce/důchodkyně","Zajímám se o umění a kulturu","Mám rád/a sport"]:["I'm a teacher interested in education","I love nature and books","I'm a student, writing for first time","I'm into IT and technology","I'm retired","I love art and culture","I enjoy sports"];
   return(<div className="max-w-2xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {cs?"Zpět":"Back"}</button>
-    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>✨ {cs?"Najdi mi adresáta":"Find me a recipient"}</h2>
-    <p className="text-stone-500 text-sm mb-4">{cs?"Řekněte nám o sobě — věk, zájmy, profese, proč chcete psát — a doporučíme vám komu.":"Tell us about yourself — age, interests, profession, why you want to write — and we'll recommend someone."}</p>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
+    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>✨ {t("Najdi mi adresáta","Find me a recipient","Подобрать адресата")}</h2>
+    <p className="text-stone-500 text-sm mb-4">{t("Řekněte nám o sobě — věk, zájmy, profese, proč chcete psát — a doporučíme vám komu.","Tell us about yourself — age, interests, profession, why you want to write — and we'll recommend someone.","Расскажите о себе — возраст, интересы, профессия, почему хотите написать — и мы подберём подходящего адресата.")}</p>
     <div className="flex flex-wrap gap-1.5 mb-3">{chips.map(c=><button key={c} onClick={()=>setAbout(a=>a?a+". "+c:c)} className="text-xs bg-stone-200 hover:bg-stone-300 text-stone-600 px-2.5 py-1 rounded-full" style={{fontFamily:"system-ui"}}>{c}</button>)}</div>
-    <textarea value={about} onChange={e=>setAbout(e.target.value)} placeholder={cs?"Napište cokoli o sobě...":"Write anything about yourself..."} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-white"/>
+    <textarea value={about} onChange={e=>setAbout(e.target.value)} placeholder={t("Napište cokoli o sobě...","Write anything about yourself...","Напишите о себе...")} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-white"/>
     <div className="flex gap-2 mt-3">
-      <button onClick={go} disabled={loading||!about.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✨ {cs?"Doporučit":"Recommend"}</button>
-      {about&&<button onClick={()=>setAbout("")} className="text-stone-400 text-xs px-3">{cs?"Smazat":"Clear"}</button>}
+      <button onClick={go} disabled={loading||!about.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✨ {t("Doporučit","Recommend","Подобрать")}</button>
+      {about&&<button onClick={()=>setAbout("")} className="text-stone-400 text-xs px-3">{t("Smazat","Clear","Очистить")}</button>}
     </div>
-    {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{cs?"Hledám...":"Searching..."}</div>}
+    {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{t("Hledám...","Searching...","Ищу...")}</div>}
     {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     {result&&<div className="mt-4">
-      <h3 className="font-bold mb-2 text-stone-700" style={{fontFamily:"system-ui"}}>✨ {cs?"Doporučení pro vás":"Recommendations for you"}</h3>
+      <h3 className="font-bold mb-2 text-stone-700" style={{fontFamily:"system-ui"}}>✨ {t("Doporučení pro vás","Recommendations for you","Рекомендации для вас")}</h3>
       {result.intro&&<p className="text-stone-600 text-sm mb-4 leading-relaxed">{result.intro}</p>}
       {result.picks&&result.picks.length>0?<div className="space-y-3">
         {result.picks.map((p,i)=>
@@ -411,16 +414,16 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between gap-2 mb-1">
                   <div className="font-bold text-stone-800" style={{fontFamily:"system-ui"}}>{cs?p.prisoner.n:p.prisoner.ne}</div>
-                  <div className="text-[11px] text-stone-400 flex-shrink-0" style={{fontFamily:"system-ui"}}>{p.prisoner.a} {cs?"let":"yo"} · {cs?p.prisoner.p:p.prisoner.pe}</div>
+                  <div className="text-[11px] text-stone-400 flex-shrink-0" style={{fontFamily:"system-ui"}}>{p.prisoner.a} {t("let","yo","лет")} · {cs?p.prisoner.p:p.prisoner.pe}</div>
                 </div>
                 <div className="text-xs text-red-700 font-medium mb-2" style={{fontFamily:"system-ui"}}>{cs?p.prisoner.s:p.prisoner.se}</div>
                 <p className="text-sm text-stone-600 leading-relaxed">{p.reason}</p>
-                <div className="flex items-center gap-1 mt-2 text-red-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{fontFamily:"system-ui"}}>{cs?"Napsat tomuto člověku":"Write to this person"} →</div>
+                <div className="flex items-center gap-1 mt-2 text-red-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{fontFamily:"system-ui"}}>{t("Napsat tomuto člověku","Write to this person","Написать этому человеку")} →</div>
               </div>
             </div>
           </button>
         )}
-        <p className="text-xs text-stone-400 text-center pt-2" style={{fontFamily:"system-ui"}}>{cs?"Žádný neoslovil? ":"Not the right match? "}<button onClick={()=>back()} className="text-red-600 underline">{cs?"Procházet všechny":"Browse all"}</button></p>
+        <p className="text-xs text-stone-400 text-center pt-2" style={{fontFamily:"system-ui"}}>{t("Žádný neoslovil? ","Not the right match? ","Никто не подошёл? ")}<button onClick={()=>back()} className="text-red-600 underline">{t("Procházet všechny","Browse all","Смотреть всех")}</button></p>
       </div>:result.raw?<div className="bg-white border rounded-lg p-4 text-sm whitespace-pre-wrap">{result.raw}</div>:null}
     </div>}
   </div>);
@@ -441,15 +444,15 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [saved,setSaved]=useState(false);
   const [showGuide,setShowGuide]=useState(false);
   const cp=t=>{try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch(e){}};
-  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(cs?"Generuji...":"Generating...");setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${cs?"O mně":"About me"}: ${about}\n\n${cs?"Napiš":"Write"} ${lt==="postcard"?(cs?"pohlednici":"postcard"):(cs?"dopis":"letter")} pro ${pr.ne}.`);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
-  const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Kontroluji...":"Checking...");setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
-  const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Překládám...":"Translating...");setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Kontroluji...","Checking...","Проверяю..."));setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Překládám...","Translating...","Перевожу..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
-  const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(cs?"Překládám upravenou verzi...":"Translating edited version...");setErr("");setTrans("");try{const r=await ai(apiKey,sT,result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
-  const tips=cs?["Jsem učitel/ka a zajímám se o vzdělávání","Rád/a čtu knihy a chodím do přírody","Jsem student/ka, píšu poprvé","Chci jen popřát hodně sil","Zajímám se o historii"]:["I'm a teacher interested in education","I love reading and nature","I'm a student, first time writing","Just want to wish them strength","I'm into history"];
+  const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(t("Překládám upravenou verzi...","Translating edited version...","Перевожу отредактированную версию..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const tips=lang==="cs"?["Jsem učitel/ka a zajímám se o vzdělávání","Rád/a čtu knihy a chodím do přírody","Jsem student/ka, píšu poprvé","Chci jen popřát hodně sil","Zajímám se o historii"]:lang==="ru"?["Я педагог, интересуюсь образованием","Люблю читать и бывать на природе","Я студент(ка), пишу впервые","Хочу просто пожелать сил","Интересуюсь историей"]:["I'm a teacher interested in education","I love reading and nature","I'm a student, first time writing","Just want to wish them strength","I'm into history"];
 
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {cs?"Zpět":"Back"}</button>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
 
     {/* Rich profile card */}
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-4">
@@ -458,11 +461,11 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
           <div className="w-14 h-14 bg-stone-700 rounded-full flex items-center justify-center font-black text-xl flex-shrink-0" style={{fontFamily:"system-ui"}}>{(cs?pr.n:pr.ne).charAt(0)}</div>
           <div className="flex-1">
             <div className="font-bold text-lg" style={{fontFamily:"system-ui"}}>{cs?pr.n:pr.ne}</div>
-            <div className="text-stone-300 text-sm">{pr.a} {cs?"let":"years old"} · {cs?pr.p:pr.pe}</div>
+            <div className="text-stone-300 text-sm">{pr.a} {t("let","years old","лет")} · {cs?pr.p:pr.pe}</div>
           </div>
           <div className="text-right">
             <div className="text-red-400 font-bold text-sm" style={{fontFamily:"system-ui"}}>{cs?pr.s:pr.se}</div>
-            {pr.o&&<div className="text-stone-300 text-[10px] mt-1" style={{fontFamily:"system-ui"}}>✉ {cs?"Lze psát online":"Can write online"}</div>}
+            {pr.o&&<div className="text-stone-300 text-[10px] mt-1" style={{fontFamily:"system-ui"}}>✉ {t("Lze psát online","Can write online","Можно писать онлайн")}</div>}
           </div>
         </div>
       </div>
@@ -472,107 +475,107 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
           {(cs?pr.int:pr.ie).map(t=><span key={t} className="text-[11px] px-2.5 py-0.5 bg-stone-100 text-stone-500 rounded-full" style={{fontFamily:"system-ui"}}>{t}</span>)}
         </div>}
         <div className="bg-stone-50 border-l-4 border-red-700 rounded-r p-3 text-sm text-stone-600 italic">
-          {cs?"Každý dopis je pro vězněného člověka důkazem, že na něj svět nezapomněl. I pár vět může být jedinou nadějí v šedivém vězeňském dni.":"Every letter proves to a prisoner that the world hasn't forgotten them. Even a few sentences can be the only hope in a gray prison day."}
+          {t("Každý dopis je pro vězněného člověka důkazem, že na něj svět nezapomněl. I pár vět může být jedinou nadějí v šedivém vězeňském dni.","Every letter proves to a prisoner that the world hasn't forgotten them. Even a few sentences can be the only hope in a gray prison day.","Каждое письмо — доказательство того, что мир не забыл. Даже пара предложений может стать единственной надеждой в серых тюремных буднях.")}
         </div>
-        {pr.v&&<a href={pr.v} target="_blank" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{cs?"Profil na Vestochka.io →":"Profile on Vestochka.io →"}</a>}
+        {pr.v&&<a href={pr.v} target="_blank" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{t("Profil na Vestochka.io →","Profile on Vestochka.io →","Профиль на Vestochka.io →")}</a>}
       </div>
     </div>
 
     {/* Compose form */}
     <div className="bg-white border border-stone-200 rounded-lg p-5">
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div><label className="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{cs?"Typ":"Type"}</label>
-          <select value={lt} onChange={e=>setLt(e.target.value)} className="w-full border rounded p-2 text-sm bg-stone-50"><option value="letter">{cs?"Dopis":"Letter"}</option><option value="postcard">{cs?"Pohlednice":"Postcard"}</option></select></div>
-        <div><label className="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{cs?"Způsob":"Method"}</label>
-          <select value={sm} onChange={e=>setSm(e.target.value)} className="w-full border rounded p-2 text-sm bg-stone-50">{pr.o&&<option value="online">Online</option>}<option value="mail">{cs?"Pošta":"Mail"}</option></select></div>
+        <div><label className="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{t("Typ","Type","Тип")}</label>
+          <select value={lt} onChange={e=>setLt(e.target.value)} className="w-full border rounded p-2 text-sm bg-stone-50"><option value="letter">{t("Dopis","Letter","Письмо")}</option><option value="postcard">{t("Pohlednice","Postcard","Открытка")}</option></select></div>
+        <div><label className="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{t("Způsob","Method","Способ")}</label>
+          <select value={sm} onChange={e=>setSm(e.target.value)} className="w-full border rounded p-2 text-sm bg-stone-50">{pr.o&&<option value="online">Online</option>}<option value="mail">{t("Pošta","Mail","Почта")}</option></select></div>
       </div>
       <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4 text-xs text-stone-600">
-        <span className="font-bold text-amber-700" style={{fontFamily:"system-ui"}}>⚠ {cs?"Pravidla":"Rules"}: </span>
-        {cs?"Rusky · Žádná politika · Žádná LGBTQ+ · Nekomentovat případ · Nebýt smutný":"Russian only · No politics · No LGBTQ+ · Don't comment case · Don't be sad"}
+        <span className="font-bold text-amber-700" style={{fontFamily:"system-ui"}}>⚠ {t("Pravidla","Rules","Правила")}: </span>
+        {t("Rusky · Žádná politika · Žádná LGBTQ+ · Nekomentovat případ · Nebýt smutný","Russian only · No politics · No LGBTQ+ · Don't comment case · Don't be sad","Только по-русски · Без политики · Без ЛГБТ+ · Не комментировать дело · Не грустить")}
         {sm==="online"&&" · Max 21 000 zn. (Prisonmail)"}
       </div>
       <div className="flex border-b border-stone-200 mb-1">
-        {[["help","✨ "+(cs?"AI napíše za vás":"AI writes for you")],["check","✓ "+(cs?"Napíšu sám/sama":"I'll write myself")]].map(([k,l])=>
+        {[["help","✨ "+(t("AI napíše za vás","AI writes for you","ИИ напишет за вас"))],["check","✓ "+(t("Napíšu sám/sama","I'll write myself","Напишу сам(а)"))]].map(([k,l])=>
           <button key={k} onClick={()=>setMode(k)} className={`px-4 py-2 text-sm font-bold border-b-2 ${mode===k?"text-red-700 border-red-700":"text-stone-400 border-transparent"}`} style={{fontFamily:"system-ui"}}>{l}</button>
         )}
       </div>
-      <p className="text-[11px] text-stone-400 mb-3">{mode==="help"?(cs?"Řekněte nám o sobě a AI vygeneruje návrh dopisu v češtině i ruštině.":"Tell us about yourself and AI will generate a draft in your language and Russian."):(cs?"Napište vlastní text. AI zkontroluje pravidla cenzury a přeloží do ruštiny.":"Write your own text. AI checks censorship rules and translates to Russian.")}</p>
+      <p className="text-[11px] text-stone-400 mb-3">{mode==="help"?(t("Řekněte nám o sobě a AI vygeneruje návrh dopisu v češtině i ruštině.","Tell us about yourself and AI will generate a draft in your language and Russian.","Расскажите о себе, и ИИ составит черновик письма.")):(t("Napište vlastní text. AI zkontroluje pravidla cenzury a přeloží do ruštiny.","Write your own text. AI checks censorship rules and translates to Russian.","Напишите текст сами. ИИ проверит его на соответствие правилам цензуры."))}</p>
       {mode==="help"&&<>
         <div className="flex flex-wrap gap-1.5 mb-2">{tips.map(t=><button key={t} onClick={()=>setAbout(a=>a?a+". "+t:t)} className="text-[11px] bg-stone-100 hover:bg-stone-200 text-stone-500 px-2 py-0.5 rounded-full" style={{fontFamily:"system-ui"}}>{t}</button>)}</div>
-        <textarea value={about} onChange={e=>setAbout(e.target.value)} placeholder={cs?"Pár slov o sobě...":"A few words about yourself..."} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
-        <div className="flex gap-2 mt-3"><button onClick={gen} disabled={loading||!about.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✨ {cs?"Vygenerovat":"Generate"}</button></div>
+        <textarea value={about} onChange={e=>setAbout(e.target.value)} placeholder={t("Pár slov o sobě...","A few words about yourself...","Пару слов о себе...")} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
+        <div className="flex gap-2 mt-3"><button onClick={gen} disabled={loading||!about.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✨ {t("Vygenerovat","Generate","Сгенерировать")}</button></div>
       </>}
       {mode==="check"&&<>
-        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder={cs?"Váš text...":"Your text..."} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder={t("Váš text...","Your text...","Ваш текст...")} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
         {sm==="online"&&<div className={`text-right text-xs mt-1 ${text.length>21000?"text-red-600 font-bold":"text-stone-400"}`}>{text.length}/21000</div>}
         <div className="flex gap-2 mt-3 flex-wrap">
-          <button onClick={chk} disabled={loading||!text.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✓ {cs?"Zkontrolovat":"Check"}</button>
-          <button onClick={tr} disabled={loading||!text.trim()} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🇷🇺 {cs?"Přeložit":"Translate"}</button>
+          <button onClick={chk} disabled={loading||!text.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✓ {t("Zkontrolovat","Check","Проверить")}</button>
+          <button onClick={tr} disabled={loading||!text.trim()} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🇷🇺 {t("Přeložit","Translate","Перевести")}</button>
         </div>
       </>}
       {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{lmsg}</div>}
       {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     </div>
     {result&&<div className="bg-white border border-stone-200 rounded-lg p-5 mt-4">
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte text a pak klikněte Přeložit do ruštiny":"✏️ Edit the text, then click Translate to Russian"}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{t("✏️ Upravte text a pak klikněte Přeložit do ruštiny","✏️ Edit the text, then click Translate to Russian","✏️ Отредактируйте текст при необходимости")}</div>
       <textarea value={result} onChange={e=>setResult(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[200px] max-h-[400px] resize-y outline-none focus:border-red-600"/>
       <div className="flex gap-2 mt-3 flex-wrap">
-        <button onClick={()=>cp(result)} className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
-        <button onClick={reTr} disabled={loading} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>🇷🇺 {cs?"Přeložit do ruštiny":"Translate to Russian"}</button>
-        {!saved&&<button onClick={save} className="bg-stone-200 text-stone-700 px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>💾 {cs?"Uložit do sbírky":"Save to collection"}</button>}
-        {saved&&<span className="text-green-600 text-xs font-bold px-3 py-1.5">✓ {cs?"Uloženo":"Saved"}</span>}
+        <button onClick={()=>cp(result)} className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {t("Kopírovat","Copy","Копировать")}</button>
+        <button onClick={reTr} disabled={loading} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>🇷🇺 {t("Přeložit do ruštiny","Translate to Russian","Перевести на русский")}</button>
+        {!saved&&<button onClick={save} className="bg-stone-200 text-stone-700 px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>💾 {t("Uložit do sbírky","Save to collection","Сохранить в коллекцию")}</button>}
+        {saved&&<span className="text-green-600 text-xs font-bold px-3 py-1.5">✓ {t("Uloženo","Saved","Сохранено")}</span>}
       </div>
     </div>}
     {trans&&<div className="bg-white border border-stone-200 rounded-lg p-5 mt-4">
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"Ruská verze":"Russian version"}</div>
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{cs?"✏️ Upravte překlad podle potřeby":"✏️ Edit translation as needed"}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2" style={{fontFamily:"system-ui"}}>{t("Ruská verze","Russian version","Русская версия")}</div>
+      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1" style={{fontFamily:"system-ui"}}>{t("✏️ Upravte překlad podle potřeby","✏️ Edit translation as needed","✏️ Отредактируйте перевод при необходимости")}</div>
       <textarea value={trans} onChange={e=>setTrans(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[120px] max-h-[300px] resize-y outline-none focus:border-red-600"/>
-      <button onClick={()=>cp(trans)} className="mt-3 bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
+      <button onClick={()=>cp(trans)} className="mt-3 bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {t("Kopírovat","Copy","Копировать")}</button>
     </div>}
     {(result||trans)&&<div className="bg-stone-50 border border-dashed border-stone-300 rounded-lg p-4 mt-4 text-sm">
-      <h4 className="font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"Jak odeslat":"How to send"}</h4>
+      <h4 className="font-bold mb-2" style={{fontFamily:"system-ui"}}>{t("Jak odeslat","How to send","Как отправить")}</h4>
       {sm==="online"?<>
-        <p className="text-stone-500 mb-3">{cs?"Zkopírujte ruský text a vložte ho na Prisonmail.online. Budete potřebovat e-mail a platební kartu.":"Copy the Russian text to Prisonmail.online. You will need an email and payment card."}</p>
+        <p className="text-stone-500 mb-3">{t("Zkopírujte ruský text a vložte ho na Prisonmail.online. Budete potřebovat e-mail a platební kartu.","Copy the Russian text to Prisonmail.online. You will need an email and payment card.","Скопируйте текст и вставьте его на Prisonmail.online. Вам понадобится e-mail и банковская карта.")}</p>
         <a href="https://prisonmail.online" target="_blank" className="bg-red-700 text-white px-4 py-2 rounded text-xs font-bold inline-block mb-3" style={{fontFamily:"system-ui"}}>Prisonmail.online (od $1.5/str.)</a>
-        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold mt-1 hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {cs?"Podrobný návod krok za krokem":"Detailed step-by-step guide"}</button>
+        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold mt-1 hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {t("Podrobný návod krok za krokem","Detailed step-by-step guide","Подробная пошаговая инструкция")}</button>
         {showGuide&&<div className="mt-3 space-y-2 text-stone-600 text-xs leading-relaxed">
-          <div className="bg-white rounded p-3 border"><strong>1.</strong> {cs?"Zkontrolujte, zda věznice adresáta je napojena na prisonmail.online. Ne všechny věznice jsou napojeny.":"Check if the prisoner's facility is connected to prisonmail.online. Not all are."}</div>
-          <div className="bg-white rounded p-3 border"><strong>2.</strong> {cs?"Připravte si dopis v ruštině. Maximální délka: 21 000 znaků včetně mezer.":"Prepare your letter in Russian. Maximum length: 21,000 characters including spaces."}</div>
-          <div className="bg-white rounded p-3 border"><strong>3.</strong> {cs?"Na prisonmail.online vyberte oblast, kde se věznice nachází, a pak konkrétní věznici.":"On prisonmail.online, select the region where the prison is located, then the specific facility."}</div>
-          <div className="bg-white rounded p-3 border"><strong>4.</strong> {cs?"Vyplňte údaje o vězni: příjmení, jméno, jméno po otci a rok narození — vše rusky, bez chyb.":"Enter the prisoner's details: last name, first name, middle name, and year of birth — all in Russian, without errors."}</div>
-          <div className="bg-white rounded p-3 border"><strong>5.</strong> {cs?"Vyplňte své údaje: jméno, telefon a e-mail (klidně latinkou, bez diakritiky). E-mail musí fungovat — sem přijdou odpovědi.":"Enter your details: name, phone, and email (Latin script OK, no diacritics). Email must work — replies come here."}</div>
-          <div className="bg-white rounded p-3 border"><strong>6.</strong> {cs?"Vložte text dopisu. Volitelně zaškrtněte odpověď (+$1.5) a/nebo obrázek (+$1.5). Obrázek cenzor vytiskne černobíle — může to být příroda, zvířata, fotka města, kresba (nic politického).":"Paste your letter text. Optionally check reply (+$1.5) and/or image (+$1.5). The censor prints images in B&W — nature, animals, city photos, drawings are fine (nothing political)."}</div>
-          <div className="bg-white rounded p-3 border"><strong>7.</strong> {cs?"Zkontrolujte údaje a zaplaťte. Cena: $1.5 za stránku textu + volitelné příplatky. Platbu zpracovává uzbecká banka (Octobank), částka se zobrazí v UZS.":"Check details and pay. Price: $1.5 per page + optional extras. Payment processed by Uzbek bank (Octobank), amount shown in UZS."}</div>
-          <div className="bg-white rounded p-3 border"><strong>8.</strong> {cs?"Po odeslání dostanete e-mailem potvrzení. Další mail přijde, až bude dopis předán adresátovi. Pokud jste zaplatili odpověď, přijde naskenovaná mailem.":"You will receive email confirmation after sending. Another email arrives when the letter is delivered. If you paid for a reply, it comes scanned via email."}</div>
+          <div className="bg-white rounded p-3 border"><strong>1.</strong> {t("Zkontrolujte, zda věznice adresáta je napojena na prisonmail.online. Ne všechny věznice jsou napojeny.","Check if the prisoner's facility is connected to prisonmail.online. Not all are.","Проверьте, подключено ли учреждение адресата к prisonmail.online. Не все колонии подключены.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>2.</strong> {t("Připravte si dopis v ruštině. Maximální délka: 21 000 znaků včetně mezer.","Prepare your letter in Russian. Maximum length: 21,000 characters including spaces.","Подготовьте письмо на русском языке. Максимальная длина: 21 000 знаков с пробелами.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>3.</strong> {t("Na prisonmail.online vyberte oblast, kde se věznice nachází, a pak konkrétní věznici.","On prisonmail.online, select the region where the prison is located, then the specific facility.","На prisonmail.online выберите регион, где находится учреждение, затем конкретную колонию.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>4.</strong> {t("Vyplňte údaje o vězni: příjmení, jméno, jméno po otci a rok narození — vše rusky, bez chyb.","Enter the prisoner's details: last name, first name, middle name, and year of birth — all in Russian, without errors.","Заполните данные заключённого: фамилию, имя, отчество и год рождения — без ошибок.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>5.</strong> {t("Vyplňte své údaje: jméno, telefon a e-mail (klidně latinkou, bez diakritiky). E-mail musí fungovat — sem přijdou odpovědi.","Enter your details: name, phone, and email (Latin script OK, no diacritics). Email must work — replies come here.","Укажите свои данные: имя, телефон и e-mail (можно латиницей). E-mail должен быть рабочим — туда придут ответы.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>6.</strong> {t("Vložte text dopisu. Volitelně zaškrtněte odpověď (+$1.5) a/nebo obrázek (+$1.5). Obrázek cenzor vytiskne černobíle — může to být příroda, zvířata, fotka města, kresba (nic politického).","Paste your letter text. Optionally check reply (+$1.5) and/or image (+$1.5). The censor prints images in B&W — nature, animals, city photos, drawings are fine (nothing political).","Вставьте текст письма. По желанию отметьте получение ответа (+$1.5) и/или картинку (+$1.5). Цензор распечатает изображение ч/б — подойдёт природа, животные, фото города, рисунок (ничего политического).")}</div>
+          <div className="bg-white rounded p-3 border"><strong>7.</strong> {t("Zkontrolujte údaje a zaplaťte. Cena: $1.5 za stránku textu + volitelné příplatky. Platbu zpracovává uzbecká banka (Octobank), částka se zobrazí v UZS.","Check details and pay. Price: $1.5 per page + optional extras. Payment processed by Uzbek bank (Octobank), amount shown in UZS.","Проверьте данные и оплатите. Цена: $1.5 за страницу текста + доп. услуги. Платёж обрабатывает узбекский банк (Octobank), сумма отображается в UZS.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>8.</strong> {t("Po odeslání dostanete e-mailem potvrzení. Další mail přijde, až bude dopis předán adresátovi. Pokud jste zaplatili odpověď, přijde naskenovaná mailem.","You will receive email confirmation after sending. Another email arrives when the letter is delivered. If you paid for a reply, it comes scanned via email.","После отправки вы получите подтверждение по e-mail. Ещё одно письмо придёт, когда письмо будет вручено адресату. Если вы оплатили ответ, он придёт в виде скана на e-mail.")}</div>
         </div>}
       </>:<>
-        <p className="text-stone-500 mb-3">{cs?"Klasická pošta — osobnější, ale trvá 1–2 měsíce. Obálka max 99g. Posílat ekonomicky (48 Kč), NE doporučeně.":"Regular mail — more personal, takes 1–2 months. Envelope max 99g. Send economy class (48 CZK), NOT registered."}</p>
+        <p className="text-stone-500 mb-3">{t("Klasická pošta — osobnější, ale trvá 1–2 měsíce. Obálka max 99g. Posílat ekonomicky (48 Kč), NE doporučeně.","Regular mail — more personal, takes 1–2 months. Envelope max 99g. Send economy class (48 CZK), NOT registered.","Обычная почта — более личный вариант, но идёт 1–2 месяца. Конверт до 99 г. Отправлять обычным (не заказным!) письмом.")}</p>
         {pr.ad&&<div className="bg-white border rounded p-3 font-mono text-xs mb-3">{pr.ad}<br/>RUSSIA</div>}
-        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {cs?"Podrobný návod krok za krokem":"Detailed step-by-step guide"}</button>
+        <button onClick={()=>setShowGuide(!showGuide)} className="block text-red-700 text-xs font-bold hover:underline" style={{fontFamily:"system-ui"}}>{showGuide?"▲":"▼"} {t("Podrobný návod krok za krokem","Detailed step-by-step guide","Подробная пошаговая инструкция")}</button>
         {showGuide&&<div className="mt-3 space-y-2 text-stone-600 text-xs leading-relaxed">
-          <div className="bg-white rounded p-3 border"><strong>1.</strong> {cs?"Připravte dopis v ruštině — buď přepsaný rukou, nebo vytištěný. Na konci uveďte datum napsání.":"Prepare your letter in Russian — either handwritten or printed. Include the date at the end."}</div>
-          <div className="bg-white rounded p-3 border"><strong>2.</strong> {cs?"Doporučujeme si dopis ofotit nebo zkopírovat — hodí se, pokud přijde odpověď.":"We recommend photographing or copying your letter — useful if you get a reply."}</div>
-          <div className="bg-white rounded p-3 border"><strong>3.</strong> {cs?"Vložte dopis do obálky. Můžete přidat: čistý papír, obrázek, fotku, pohlednici, prázdnou obálku s vaší zpáteční adresou (pro snazší odpověď).":"Put the letter in an envelope. You can add: blank paper, a picture, photo, postcard, empty envelope with your return address (for easier reply)."}</div>
-          <div className="bg-white rounded p-3 border"><strong>4.</strong> {cs?"Doporučujeme vložit Připomínku pro ruské cenzory (text níže) — citace z ruských zákonů o právu vězňů na korespondenci.":"We recommend including a Reminder for Russian censors (text below) — citations from Russian law on prisoners' correspondence rights."}</div>
-          <div className="bg-white rounded p-3 border"><strong>5.</strong> {cs?"Nadepište obálku: adresa vězně vpravo dole (v azbuce), známka vpravo nahoře (min 3×3 cm místa), vaše adresa vlevo nahoře (česky). Na konec adresy vězně napište RUSSIA.":"Address the envelope: prisoner's address bottom right (in Cyrillic), stamp top right (min 3×3 cm space), your address top left (in your language). Write RUSSIA at the end of the prisoner's address."}</div>
-          <div className="bg-white rounded p-3 border"><strong>6.</strong> {cs?"Pokud si nejste jistí azbukou, adresu vytiskněte a nalepte na obálku.":"If unsure about Cyrillic, print the address and stick it on the envelope."}</div>
-          <div className="bg-white rounded p-3 border"><strong>7.</strong> {cs?"Odešlete ekonomicky na kterékoliv pobočce České pošty. Cena: 48 Kč (do 50g). Doporučeně NEPOSÍLEJTE — může vězni způsobit problémy.":"Send economy class at any Czech Post office. Price: 48 CZK (up to 50g). Do NOT send registered — it can cause problems for the prisoner."}</div>
-          <div className="bg-white rounded p-3 border"><strong>8.</strong> {cs?"Odpověď přijde klasickou poštou do vaší schránky. Počítejte s 1–2 měsíci na cestu tam i zpět.":"Reply arrives by regular mail to your mailbox. Expect 1–2 months for delivery each way."}</div>
+          <div className="bg-white rounded p-3 border"><strong>1.</strong> {t("Připravte dopis v ruštině — buď přepsaný rukou, nebo vytištěný. Na konci uveďte datum napsání.","Prepare your letter in Russian — either handwritten or printed. Include the date at the end.","Подготовьте письмо на русском — рукописное или распечатанное. В конце укажите дату написания.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>2.</strong> {t("Doporučujeme si dopis ofotit nebo zkopírovat — hodí se, pokud přijde odpověď.","We recommend photographing or copying your letter — useful if you get a reply.","Рекомендуем сфотографировать или сохранить копию письма — пригодится, если придёт ответ.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>3.</strong> {t("Vložte dopis do obálky. Můžete přidat: čistý papír, obrázek, fotku, pohlednici, prázdnou obálku s vaší zpáteční adresou (pro snazší odpověď).","Put the letter in an envelope. You can add: blank paper, a picture, photo, postcard, empty envelope with your return address (for easier reply).","Вложите письмо в конверт. Можно добавить: чистую бумагу, картинку, фотографию, открытку, пустой конверт с вашим обратным адресом (чтобы адресату было проще ответить).")}</div>
+          <div className="bg-white rounded p-3 border"><strong>4.</strong> {t("Doporučujeme vložit Připomínku pro ruské cenzory (text níže) — citace z ruských zákonů o právu vězňů na korespondenci.","We recommend including a Reminder for Russian censors (text below) — citations from Russian law on prisoners' correspondence rights.","Рекомендуем вложить Памятку для цензоров (текст ниже) — цитаты из российских законов о праве заключённых на переписку.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>5.</strong> {t("Nadepište obálku: adresa vězně vpravo dole (v azbuce), známka vpravo nahoře (min 3×3 cm místa), vaše adresa vlevo nahoře (česky). Na konec adresy vězně napište RUSSIA.","Address the envelope: prisoner's address bottom right (in Cyrillic), stamp top right (min 3×3 cm space), your address top left (in your language). Write RUSSIA at the end of the prisoner's address.","Подпишите конверт: адрес заключённого справа внизу (кириллицей), марка справа вверху (мин. 3×3 см), ваш адрес слева вверху. В конце адреса заключённого напишите RUSSIA.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>6.</strong> {t("Pokud si nejste jistí azbukou, adresu vytiskněte a nalepte na obálku.","If unsure about Cyrillic, print the address and stick it on the envelope.","Если вы не уверены в почерке, распечатайте адрес и наклейте на конверт.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>7.</strong> {t("Odešlete ekonomicky na kterékoliv pobočce České pošty. Cena: 48 Kč (do 50g). Doporučeně NEPOSÍLEJTE — může vězni způsobit problémy.","Send economy class at any Czech Post office. Price: 48 CZK (up to 50g). Do NOT send registered — it can cause problems for the prisoner.","Отправьте обычным (не заказным!) письмом на почте вашей страны. Заказные письма могут создать проблемы для адресата.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>8.</strong> {t("Odpověď přijde klasickou poštou do vaší schránky. Počítejte s 1–2 měsíci na cestu tam i zpět.","Reply arrives by regular mail to your mailbox. Expect 1–2 months for delivery each way.","Ответ придёт обычной почтой. Рассчитывайте на 1–2 месяца в каждую сторону.")}</div>
           <div className="bg-white rounded p-3 border border-amber-200 bg-amber-50 mt-3">
-            <div className="font-bold text-amber-800 mb-1" style={{fontFamily:"system-ui"}}>{cs?"Připomínka pro ruské cenzory":"Reminder for Russian censors"}</div>
-            <div className="text-[11px] text-stone-500 italic leading-relaxed">{cs?"Následující text doporučujeme vytisknout a vložit do obálky s dopisem:":"We recommend printing the following text and including it in the envelope:"}</div>
+            <div className="font-bold text-amber-800 mb-1" style={{fontFamily:"system-ui"}}>{t("Připomínka pro ruské cenzory","Reminder for Russian censors","Памятка для цензоров")}</div>
+            <div className="text-[11px] text-stone-500 italic leading-relaxed">{t("Následující text doporučujeme vytisknout a vložit do obálky s dopisem:","We recommend printing the following text and including it in the envelope:","Рекомендуем распечатать этот текст и вложить в конверт:")}</div>
             <div className="mt-2 bg-white border rounded p-2 text-[10px] text-stone-600 font-mono leading-relaxed whitespace-pre-wrap">{"УИК РФ ст. 91: Осуждённым разрешается получать и отправлять письма и почтовые карточки без ограничения их количества. Срок цензуры — не более 3 рабочих дней, для иностранного языка — не более 7 дней.\n\nФЗ № 103-ФЗ ст. 20: Подозреваемым и обвиняемым разрешается вести переписку без ограничения числа писем.\n\nВ случае перевода адресата в другое учреждение прошу переслать это письмо по месту его/её убытия согласно требованиям ст. 30 ФЗ № 103-ФЗ."}</div>
           </div>
           <div className="bg-white rounded p-3 border border-blue-200 bg-blue-50 mt-3">
-            <div className="font-bold text-blue-800 mb-1" style={{fontFamily:"system-ui"}}>{cs?"Vzor obálky":"Envelope template"}</div>
+            <div className="font-bold text-blue-800 mb-1" style={{fontFamily:"system-ui"}}>{t("Vzor obálky","Envelope template","Образец конверта")}</div>
             <div className="mt-2 text-[11px] text-stone-600 leading-relaxed">
               <div className="bg-white border-2 border-stone-300 rounded p-4 relative" style={{minHeight:"140px"}}>
-                <div className="text-[10px] text-stone-400 italic">{cs?"Vlevo nahoře — vaše adresa (česky):":"Top left — your address:"}</div>
+                <div className="text-[10px] text-stone-400 italic">{t("Vlevo nahoře — vaše adresa (česky):","Top left — your address:","Слева вверху — ваш адрес:")}</div>
                 <div className="text-[10px] text-stone-500">Jan Novák, Lipová 5, 110 00 Praha, CZECHIA</div>
-                <div className="absolute top-2 right-2 border border-stone-300 rounded w-10 h-10 flex items-center justify-center text-[8px] text-stone-400">{cs?"ZNÁMKA":"STAMP"}</div>
+                <div className="absolute top-2 right-2 border border-stone-300 rounded w-10 h-10 flex items-center justify-center text-[8px] text-stone-400">{t("ZNÁMKA","STAMP","МАРКА")}</div>
                 <div className="mt-8 text-right">
-                  <div className="text-[10px] text-stone-400 italic">{cs?"Vpravo dole — adresa vězně (azbukou):":"Bottom right — prisoner address (Cyrillic):"}</div>
-                  {pr.ad?<div className="text-[10px] text-stone-700 font-mono">{pr.ad}<br/>RUSSIA</div>:<div className="text-[10px] text-stone-500 italic">{cs?"Příjmení Jméno Otčestvo, rok nar., název věznice, ulice, město, oblast, PSČ":"Last First Middle, birth year, prison name, street, city, region, postal code"}<br/>RUSSIA</div>}
+                  <div className="text-[10px] text-stone-400 italic">{t("Vpravo dole — adresa vězně (azbukou):","Bottom right — prisoner address (Cyrillic):","Справа внизу — адрес заключённого:")}</div>
+                  {pr.ad?<div className="text-[10px] text-stone-700 font-mono">{pr.ad}<br/>RUSSIA</div>:<div className="text-[10px] text-stone-500 italic">{t("Příjmení Jméno Otčestvo, rok nar., název věznice, ulice, město, oblast, PSČ","Last First Middle, birth year, prison name, street, city, region, postal code","Фамилия Имя Отчество, год рожд., название учреждения, улица, город, область, индекс")}<br/>RUSSIA</div>}
                 </div>
               </div>
             </div>
@@ -589,17 +592,17 @@ function Scan({cs,lang,apiKey,back,needKey}){
   const ref=useRef();
   const resizeImg=(file,maxDim=1200)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.85);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
   const ld=async f=>{if(!f)return;const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev(r.preview);};
-  const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),cs?"Rozpoznej a přelož tento dopis.":"Recognize and translate.",img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),t("Rozpoznej a přelož tento dopis.","Recognize and translate.","Распознай и переведи это письмо."),img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {cs?"Zpět":"Back"}</button>
-    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {cs?"Rozpoznání a překlad":"Scan & Translate"}</h2>
-    <p className="text-stone-500 text-sm mb-4">{cs?"Nahrajte sken ručně psané odpovědi v ruštině.":"Upload a scan of handwritten Russian reply."}</p>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
+    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {t("Rozpoznání a překlad","Scan & Translate","Распознавание и перевод")}</h2>
+    <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken ručně psané odpovědi v ruštině.","Upload a scan of handwritten Russian reply.","Загрузите скан рукописного ответа на русском языке.")}</p>
     <input type="file" accept="image/*" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
-    {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{cs?"Nahrát sken":"Upload scan"}</div></button>
+    {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken","Upload scan","Загрузить скан")}</div></button>
     :<div><img src={prev} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>
-      <div className="flex gap-2"><button onClick={go} disabled={loading} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🔍 {cs?"Rozpoznat":"Recognize"}</button>
-      <button onClick={()=>{setPrev(null);setImg(null);setResult(null);}} className="text-stone-400 text-sm px-3">{cs?"Jiný soubor":"Different file"}</button></div></div>}
-    {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{cs?"Rozpoznávám...":"Recognizing..."}</div>}
+      <div className="flex gap-2"><button onClick={go} disabled={loading} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🔍 {t("Rozpoznat","Recognize","Распознать")}</button>
+      <button onClick={()=>{setPrev(null);setImg(null);setResult(null);}} className="text-stone-400 text-sm px-3">{t("Jiný soubor","Different file","Другой файл")}</button></div></div>}
+    {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{t("Rozpoznávám...","Recognizing...","Распознаю...")}</div>}
     {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     {result&&<div className="bg-white border rounded-lg p-5 mt-4"><div className="bg-stone-50 border rounded p-4 text-sm leading-relaxed whitespace-pre-wrap">{result}</div></div>}
   </div>);
@@ -610,35 +613,35 @@ function FAQ({cs,back}){
   const [open,setOpen]=useState(null);
   const toggle=(i)=>setOpen(open===i?null:i);
   const qa=[
-    {q:cs?"Jak to, že je tato forma podpory vězňů v Rusku stále povolena?":"How is it that this form of prisoner support in Russia is still allowed?",
-     a:cs?"Ruský trestní zákoník dosud oficiálně umožňuje vězňům korespondenci s vnějším světem a stát je povinen takový kontakt zajistit. Stát v tom nevidí velké riziko, protože celý proces korespondence je kontrolován prostřednictvím cenzury. Nelze však vyloučit, že v budoucnu nebude právo na korespondenci politických vězňů výrazně omezeno.":"The Russian Criminal Code still officially allows prisoners to correspond with the outside world, and the state is obliged to ensure such contact. The state sees no great risk because the entire correspondence process is controlled through censorship. However, we cannot rule out that the right to correspondence for political prisoners may be significantly restricted in the future."},
-    {q:cs?"Čte ty dopisy ruský cenzor?":"Does a Russian censor read the letters?",
-     a:cs?"Ano, veškerá příchozí i odchozí korespondence podléhá cenzuře ze strany vězeňské správy. Přísnost cenzury záleží na konkrétním člověku a obsahu dopisu. Do některých dopisů cenzor nemusí zasáhnout vůbec, jen si to přečte. Má ale právo některé věty vyškrtnout nebo dokonce zabavit celý dopis.":"Yes, all incoming and outgoing correspondence is subject to censorship by the prison administration. The strictness depends on the individual censor and the letter content. Some letters may pass untouched, but the censor has the right to redact sentences or confiscate the entire letter."},
-    {q:cs?"Jak je možné, že někomu lze poslat dopis elektronicky? Mají vězni přístup k internetu?":"How is electronic letter sending possible? Do prisoners have internet access?",
-     a:cs?"Ne, vězni dostávají veškerou korespondenci pouze v papírové podobě. Když odešlete dopis elektronicky (např. přes Prisonmail), dopis se poměrně rychle dostane k cenzorovi, který ho vytiskne, zkontroluje a předá vězni. Pokud si zaplatíte možnost odpovědi, cenzor převezme odpověď od vězně a naskenuje ji.":"No, prisoners receive all correspondence only on paper. When you send a letter electronically (e.g. via Prisonmail), it reaches the censor fairly quickly, who prints, checks, and delivers it. If you pay for a reply option, the censor collects the prisoner's response and scans it."},
-    {q:cs?"Když mi přijde odpověď, jak můžu věřit, že ji skutečně napsal politický vězeň?":"When I get a reply, how can I trust it was actually written by the prisoner?",
-     a:cs?"Odpovědi se ve vězení píšou ručně na papíře, takže jejich autenticitu lze obvykle ověřit podle rukopisu. Navíc je to patrné i z obsahu dopisů, protože vězni zmiňují konkrétní informace ze svého života. Zatím nemáme informace o potvrzených případech, kdy by se zaměstnanci věznice vydávali za politické vězně.":"Replies are handwritten on paper, so authenticity can usually be verified by handwriting. It is also evident from the content, as prisoners mention specific details from their lives. We have no confirmed cases of prison staff impersonating political prisoners."},
-    {q:cs?"Dostanou se moje osobní údaje do rukou FSB?":"Will my personal data reach the FSB?",
-     a:cs?"Všechno, co pošlete do ruského vězení, se dostane do rukou cenzora, a teoreticky se tedy k informacím mohou dostat i další státní orgány. Komunikace s vězni je v Rusku zatím legální a neměly by hrozit žádné následky. Pokud vám vadí samotná představa, můžete vězně podpořit jednorázovou pohlednicí bez osobních údajů, nebo využít Prisonmail se speciální e-mailovou adresou.":"Everything you send to a Russian prison reaches the censor, and theoretically other state bodies including intelligence services could access it. Communication with prisoners is currently legal in Russia with no expected consequences. If this concerns you, you can send a one-time postcard without personal details, or use Prisonmail with a dedicated email address."},
-    {q:cs?"O čem psát a o čem raději nepsat?":"What to write about and what to avoid?",
-     a:cs?"Pište rusky. Žádná politická témata (válka, Ukrajina). Žádná LGBTQ+ tematika. Nekomentovat trestní stíhání adresáta. Nevyzývat k porušování zákonů. Žádná hrubá slova. Nebýt smutný ani sentimentální. Představte se, řekněte kdo jste a proč píšete. Sdílejte pozitivní věci z běžného života. Přejte sílu a zdraví.":"Write in Russian. No political topics (war, Ukraine). No LGBTQ+ themes. Don't comment on the case. Don't call for law-breaking. No profanity. Don't be sad or sentimental. Introduce yourself, say who you are and why you write. Share positive everyday life. Wish strength and health."},
-    {q:cs?"Jak mám na obálce uvést adresu vězně?":"How should I write the prisoner's address on the envelope?",
-     a:cs?"Adresa příjemce se vždy píše v pravém dolním rohu obálky, v azbuce. Formát: jméno a rok narození, název věznice, ulice, město, oblast, PSČ. Na konec přidejte RUSSIA anglicky. Pokud si nejste jistí, že zvládnete azbuku čitelně, vytiskněte adresu a nalepte ji na obálku. Známka patří do pravého horního rohu. Adresa odesílatele (vaše) se píše v levém horním rohu česky.":"The recipient's address goes in the bottom right corner, in Cyrillic. Format: name and birth year, prison name, street, city, region, postal code. Add RUSSIA in English at the end. If unsure about Cyrillic, print the address and stick it on. Stamp goes top right. Sender's address (yours) goes top left in your language."},
-    {q:cs?"Opravdu musím psát rusky?":"Do I really have to write in Russian?",
-     a:cs?"Ano. Nejde o jazykovou vybavenost vězně, ale o cenzora, který musí porozumět celému obsahu dopisu. V naprosté většině případů cenzor nepředá vězni dopis napsaný v jiném jazyce než v ruštině. Náš nástroj vám text přeloží automaticky.":"Yes. It's not about the prisoner's language skills, but the censor who must understand the entire content. In the vast majority of cases, the censor won't deliver a letter in any language other than Russian. Our tool translates your text automatically."},
-    {q:cs?"Jak navázat dlouhodobou korespondenci?":"How to establish long-term correspondence?",
-     a:cs?"Nejjednodušší je vybrat si vězně, s nímž lze komunikovat přes Prisonmail.online. Pokud má daný vězeň možnost odpovídat, může být komunikace poměrně rychlá \u2014 odpovědi mohou chodit už za 7\u201310 dní od odeslání. Doba závisí na situaci vězně i na vytíženosti cenzora.":"The easiest way is to choose a prisoner available on Prisonmail.online. If they can reply, communication can be fairly fast \u2014 replies may come within 7\u201310 days. Timing depends on the prisoner's situation and the censor's workload."},
-    {q:cs?"Pohlednici v obálce, nebo bez?":"Postcard in envelope or without?",
-     a:cs?"Záleží na délce vzkazu. Krátký text (pár vět) pište na levou stranu pohlednice, adresu vpravo dole, známku vpravo nahoře. Pokud se text nevejde, napište ho přes celou zadní stranu a pohlednici vložte do obálky. Nenalepujte na pohlednici papír s textem \u2014 cenzor si může myslet, že se pod ním skrývá šifra.":"Depends on message length. Short text (a few sentences) goes on the left side of the postcard, address bottom right, stamp top right. If the text doesn't fit, write it on the full back and put the postcard in an envelope. Don't stick paper with text onto the postcard \u2014 the censor may suspect a hidden cipher."},
-    {q:cs?"Mohu poslat i balíček s potravinami nebo knihami?":"Can I also send a package with food or books?",
-     a:cs?"Pouze pokud se předem poradíte s rodinou vězně nebo jeho právníky. Vězni mohou během roku přijímat jen omezené množství balíků. Odeslání čehokoliv většího než dopis důrazně doporučujeme konzultovat s koordinační skupinou zřízenou na podporu konkrétního vězně. Krátké literární texty (v ruštině) můžete vložit přímo do dopisu.":"Only if you consult with the prisoner's family or lawyers first. Prisoners can receive a limited number of packages per year. Sending anything larger than a letter should be coordinated with the prisoner's support group. Short literary texts (in Russian) can be included directly in a letter."},
-    {q:cs?"Musím psát ručně? Mohu text na pohlednici nalepit?":"Must I write by hand? Can I stick text onto a postcard?",
-     a:cs?"Papírový dopis můžete napsat na počítači a vložit vytištěný do obálky. Pohlednici ale doporučujeme psát rukou. Nalepený papír může působit podezřele a cenzor si může myslet, že se pod ním skrývá další text nebo šifra \u2014 pravděpodobně ho proto odlepí.":"A paper letter can be typed and printed in an envelope. But we recommend handwriting postcards. Stuck-on paper may look suspicious \u2014 the censor may think it hides additional text or a cipher and will likely peel it off."},
+    {q:t("Jak to, že je tato forma podpory vězňů v Rusku stále povolena?","How is it that this form of prisoner support in Russia is still allowed?","Почему эта форма поддержки заключённых в России до сих пор разрешена?"),
+     a:t("Ruský trestní zákoník dosud oficiálně umožňuje vězňům korespondenci s vnějším světem a stát je povinen takový kontakt zajistit. Stát v tom nevidí velké riziko, protože celý proces korespondence je kontrolován prostřednictvím cenzury. Nelze však vyloučit, že v budoucnu nebude právo na korespondenci politických vězňů výrazně omezeno.","The Russian Criminal Code still officially allows prisoners to correspond with the outside world, and the state is obliged to ensure such contact. The state sees no great risk because the entire correspondence process is controlled through censorship. However, we cannot rule out that the right to correspondence for political prisoners may be significantly restricted in the future.","УИК РФ по-прежнему официально разрешает заключённым переписку с внешним миром, и государство обязано обеспечить такой контакт. Государство не видит в этом большого риска, так как вся переписка проходит через цензуру. Однако нельзя исключать, что в будущем право на переписку политзаключённых будет существенно ограничено.")},
+    {q:t("Čte ty dopisy ruský cenzor?","Does a Russian censor read the letters?","Читает ли письма российский цензор?"),
+     a:t("Ano, veškerá příchozí i odchozí korespondence podléhá cenzuře ze strany vězeňské správy. Přísnost cenzury záleží na konkrétním člověku a obsahu dopisu. Do některých dopisů cenzor nemusí zasáhnout vůbec, jen si to přečte. Má ale právo některé věty vyškrtnout nebo dokonce zabavit celý dopis.","Yes, all incoming and outgoing correspondence is subject to censorship by the prison administration. The strictness depends on the individual censor and the letter content. Some letters may pass untouched, but the censor has the right to redact sentences or confiscate the entire letter.","Да, вся входящая и исходящая корреспонденция проходит цензуру администрации учреждения. Строгость зависит от конкретного цензора и содержания письма. Некоторые письма цензор пропускает без изменений, просто прочитав. Но он имеет право вычеркнуть отдельные фразы или изъять письмо целиком.")},
+    {q:t("Jak je možné, že někomu lze poslat dopis elektronicky? Mají vězni přístup k internetu?","How is electronic letter sending possible? Do prisoners have internet access?","Как можно отправить письмо электронно? Есть ли у заключённых интернет?"),
+     a:t("Ne, vězni dostávají veškerou korespondenci pouze v papírové podobě. Když odešlete dopis elektronicky (např. přes Prisonmail), dopis se poměrně rychle dostane k cenzorovi, který ho vytiskne, zkontroluje a předá vězni. Pokud si zaplatíte možnost odpovědi, cenzor převezme odpověď od vězně a naskenuje ji.","No, prisoners receive all correspondence only on paper. When you send a letter electronically (e.g. via Prisonmail), it reaches the censor fairly quickly, who prints, checks, and delivers it. If you pay for a reply option, the censor collects the prisoner's response and scans it.","Нет, заключённые получают всю корреспонденцию только в бумажном виде. Когда вы отправляете письмо электронно (например, через Prisonmail), оно довольно быстро попадает к цензору, который его распечатывает, проверяет и передаёт заключённому. Если вы оплатили возможность ответа, цензор принимает ответ и сканирует его.")},
+    {q:t("Když mi přijde odpověď, jak můžu věřit, že ji skutečně napsal politický vězeň?","When I get a reply, how can I trust it was actually written by the prisoner?","Если мне придёт ответ, как убедиться, что его действительно написал политзаключённый?"),
+     a:t("Odpovědi se ve vězení píšou ručně na papíře, takže jejich autenticitu lze obvykle ověřit podle rukopisu. Navíc je to patrné i z obsahu dopisů, protože vězni zmiňují konkrétní informace ze svého života. Zatím nemáme informace o potvrzených případech, kdy by se zaměstnanci věznice vydávali za politické vězně.","Replies are handwritten on paper, so authenticity can usually be verified by handwriting. It is also evident from the content, as prisoners mention specific details from their lives. We have no confirmed cases of prison staff impersonating political prisoners.","Ответы в тюрьме пишут от руки на бумаге, поэтому подлинность обычно можно проверить по почерку. Кроме того, заключённые упоминают конкретные детали из своей жизни, которые легко проверить. Подтверждённых случаев, когда сотрудники учреждения выдавали бы себя за политзаключённых, у нас нет.")},
+    {q:t("Dostanou se moje osobní údaje do rukou FSB?","Will my personal data reach the FSB?","Попадут ли мои личные данные в руки ФСБ?"),
+     a:t("Všechno, co pošlete do ruského vězení, se dostane do rukou cenzora, a teoreticky se tedy k informacím mohou dostat i další státní orgány. Komunikace s vězni je v Rusku zatím legální a neměly by hrozit žádné následky. Pokud vám vadí samotná představa, můžete vězně podpořit jednorázovou pohlednicí bez osobních údajů, nebo využít Prisonmail se speciální e-mailovou adresou.","Everything you send to a Russian prison reaches the censor, and theoretically other state bodies including intelligence services could access it. Communication with prisoners is currently legal in Russia with no expected consequences. If this concerns you, you can send a one-time postcard without personal details, or use Prisonmail with a dedicated email address.","Всё, что вы отправите в российскую тюрьму, попадает в руки цензора, а значит, теоретически доступно и другим государственным органам. Переписка с заключёнными в России пока легальна и не должна повлечь последствий. Если вас беспокоит сама идея, можно отправить разовую открытку без личных данных или использовать Prisonmail со специальным e-mail-адресом.")},
+    {q:t("O čem psát a o čem raději nepsat?","What to write about and what to avoid?","О чём писать, а о чём лучше не стоит?"),
+     a:t("Pište rusky. Žádná politická témata (válka, Ukrajina). Žádná LGBTQ+ tematika. Nekomentovat trestní stíhání adresáta. Nevyzývat k porušování zákonů. Žádná hrubá slova. Nebýt smutný ani sentimentální. Představte se, řekněte kdo jste a proč píšete. Sdílejte pozitivní věci z běžného života. Přejte sílu a zdraví.","Write in Russian. No political topics (war, Ukraine). No LGBTQ+ themes. Don't comment on the case. Don't call for law-breaking. No profanity. Don't be sad or sentimental. Introduce yourself, say who you are and why you write. Share positive everyday life. Wish strength and health.","Пишите по-русски. Никакой политики (война, Украина). Никакой ЛГБТ+-тематики. Не комментировать уголовное дело адресата. Не призывать к нарушению законов. Без грубых слов. Не грустить и не жалеть. Представьтесь, расскажите, кто вы и почему пишете. Поделитесь позитивным из повседневной жизни. Пожелайте сил и здоровья.")},
+    {q:t("Jak mám na obálce uvést adresu vězně?","How should I write the prisoner's address on the envelope?","Как правильно написать адрес заключённого на конверте?"),
+     a:t("Adresa příjemce se vždy píše v pravém dolním rohu obálky, v azbuce. Formát: jméno a rok narození, název věznice, ulice, město, oblast, PSČ. Na konec přidejte RUSSIA anglicky. Pokud si nejste jistí, že zvládnete azbuku čitelně, vytiskněte adresu a nalepte ji na obálku. Známka patří do pravého horního rohu. Adresa odesílatele (vaše) se píše v levém horním rohu česky.","The recipient's address goes in the bottom right corner, in Cyrillic. Format: name and birth year, prison name, street, city, region, postal code. Add RUSSIA in English at the end. If unsure about Cyrillic, print the address and stick it on. Stamp goes top right. Sender's address (yours) goes top left in your language.","Адрес получателя пишется в правом нижнем углу конверта. Формат: ФИО и год рождения, название учреждения, улица, город, область, индекс. В конце добавьте RUSSIA латиницей. Если не уверены в разборчивости почерка, распечатайте адрес и наклейте. Марка — в правом верхнем углу. Ваш адрес — в левом верхнем углу.")},
+    {q:t("Opravdu musím psát rusky?","Do I really have to write in Russian?","Обязательно ли писать по-русски?"),
+     a:t("Ano. Nejde o jazykovou vybavenost vězně, ale o cenzora, který musí porozumět celému obsahu dopisu. V naprosté většině případů cenzor nepředá vězni dopis napsaný v jiném jazyce než v ruštině. Náš nástroj vám text přeloží automaticky.","Yes. It's not about the prisoner's language skills, but the censor who must understand the entire content. In the vast majority of cases, the censor won't deliver a letter in any language other than Russian. Our tool translates your text automatically.","Да. Дело не в языковых навыках заключённого, а в цензоре, который должен понимать всё содержание. В подавляющем большинстве случаев цензор не передаёт письмо, написанное не на русском языке.")},
+    {q:t("Jak navázat dlouhodobou korespondenci?","How to establish long-term correspondence?","Как наладить длительную переписку?"),
+     a:t("Nejjednodušší je vybrat si vězně, s nímž lze komunikovat přes Prisonmail.online. Pokud má daný vězeň možnost odpovídat, může být komunikace poměrně rychlá \u2014 odpovědi mohou chodit už za 7\u201310 dní od odeslání. Doba závisí na situaci vězně i na vytíženosti cenzora.","The easiest way is to choose a prisoner available on Prisonmail.online. If they can reply, communication can be fairly fast \u2014 replies may come within 7\u201310 days. Timing depends on the prisoner's situation and the censor's workload.","Проще всего выбрать заключённого, с которым можно связаться через Prisonmail.online. Если у него есть возможность отвечать, переписка может быть довольно быстрой — ответы приходят через 7–10 дней. Сроки зависят от ситуации заключённого и загруженности цензора.")},
+    {q:t("Pohlednici v obálce, nebo bez?","Postcard in envelope or without?","Открытку в конверте или без?"),
+     a:t("Záleží na délce vzkazu. Krátký text (pár vět) pište na levou stranu pohlednice, adresu vpravo dole, známku vpravo nahoře. Pokud se text nevejde, napište ho přes celou zadní stranu a pohlednici vložte do obálky. Nenalepujte na pohlednici papír s textem \u2014 cenzor si může myslet, že se pod ním skrývá šifra.","Depends on message length. Short text (a few sentences) goes on the left side of the postcard, address bottom right, stamp top right. If the text doesn't fit, write it on the full back and put the postcard in an envelope. Don't stick paper with text onto the postcard \u2014 the censor may suspect a hidden cipher.","Зависит от длины сообщения. Короткий текст пишите на левой стороне открытки, адрес — справа внизу, марку — справа вверху. Если текст не помещается, напишите его на всей задней стороне и вложите открытку в конверт. Не наклеивайте бумагу с текстом — цензор может заподозрить шифр.")},
+    {q:t("Mohu poslat i balíček s potravinami nebo knihami?","Can I also send a package with food or books?","Можно ли отправить посылку с едой или книгами?"),
+     a:t("Pouze pokud se předem poradíte s rodinou vězně nebo jeho právníky. Vězni mohou během roku přijímat jen omezené množství balíků. Odeslání čehokoliv většího než dopis důrazně doporučujeme konzultovat s koordinační skupinou zřízenou na podporu konkrétního vězně. Krátké literární texty (v ruštině) můžete vložit přímo do dopisu.","Only if you consult with the prisoner's family or lawyers first. Prisoners can receive a limited number of packages per year. Sending anything larger than a letter should be coordinated with the prisoner's support group. Short literary texts (in Russian) can be included directly in a letter.","Только если вы предварительно посоветуетесь с семьёй заключённого или его адвокатами. Заключённые могут получать ограниченное количество посылок в год. Отправку чего-либо крупнее письма настоятельно рекомендуем согласовать с группой поддержки конкретного заключённого. Короткие литературные тексты (на русском) можно вложить прямо в письмо.")},
+    {q:t("Musím psát ručně? Mohu text na pohlednici nalepit?","Must I write by hand? Can I stick text onto a postcard?","Нужно ли писать от руки? Можно ли наклеить текст на открытку?"),
+     a:t("Papírový dopis můžete napsat na počítači a vložit vytištěný do obálky. Pohlednici ale doporučujeme psát rukou. Nalepený papír může působit podezřele a cenzor si může myslet, že se pod ním skrývá další text nebo šifra \u2014 pravděpodobně ho proto odlepí.","A paper letter can be typed and printed in an envelope. But we recommend handwriting postcards. Stuck-on paper may look suspicious \u2014 the censor may think it hides additional text or a cipher and will likely peel it off.","Бумажное письмо можно набрать на компьютере и вложить распечатку в конверт. Открытку же рекомендуем писать от руки. Наклеенная бумага может вызвать подозрения — цензор может решить, что под ней скрыт текст или шифр, и скорее всего её отклеит.")},
   ];
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>{"\u2190"} {cs?"Zpět":"Back"}</button>
-    <h2 className="text-2xl font-bold mb-2" style={{fontFamily:"system-ui"}}>{"\u2753"} {cs?"Časté dotazy":"FAQ"}</h2>
-    <p className="text-stone-500 text-sm mb-6">{cs?"Odpovědi na nejčastější otázky z workshopů psaní dopisů politickým vězňům.":"Answers to the most common questions from letter-writing workshops."}</p>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>{"\u2190"} {t("Zpět","Back","Назад")}</button>
+    <h2 className="text-2xl font-bold mb-2" style={{fontFamily:"system-ui"}}>{"\u2753"} {t("Časté dotazy","FAQ","Частые вопросы")}</h2>
+    <p className="text-stone-500 text-sm mb-6">{t("Odpovědi na nejčastější otázky z workshopů psaní dopisů politickým vězňům.","Answers to the most common questions from letter-writing workshops.","Ответы на самые частые вопросы о переписке с политзаключёнными.")}</p>
     <div className="space-y-2">
       {qa.map((item,i)=>(
         <div key={i} className="border border-stone-200 rounded-lg bg-white overflow-hidden">
@@ -655,12 +658,12 @@ function FAQ({cs,back}){
 
 function Collection({cs,letters,back,pick}){
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
-    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {cs?"Zpět":"Back"}</button>
-    <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>📬 {cs?"Moje dopisy":"My letters"}</h2>
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
+    <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>📬 {t("Moje dopisy","My letters","Мои письма")}</h2>
     {letters.length===0?<div className="text-center py-12 text-stone-400">
       <div className="text-4xl mb-3">✉</div>
-      <p>{cs?"Zatím jste žádný dopis neuložili.":"You haven't saved any letters yet."}</p>
-      <p className="text-sm mt-2">{cs?"Napište svůj první dopis a uložte ho sem.":"Write your first letter and save it here."}</p>
+      <p>{t("Zatím jste žádný dopis neuložili.","You haven't saved any letters yet.","Вы ещё не сохранили ни одного письма.")}</p>
+      <p className="text-sm mt-2">{t("Napište svůj první dopis a uložte ho sem.","Write your first letter and save it here.","Напишите первое письмо и сохраните его здесь.")}</p>
     </div>:
     <div className="space-y-3">{letters.map((l,i)=>
       <div key={i} className="bg-white border border-stone-200 rounded-lg p-4">
