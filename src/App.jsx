@@ -150,6 +150,7 @@ export default function App(){
         {scr==="compose"&&sel&&<Compose cs={cs} lang={lang} pr={sel} apiKey={key} back={()=>setScr(composeBack)} needKey={()=>setShowKey(true)} addLetter={addLetter}/>}
         {scr==="scan"&&<Scan cs={cs} lang={lang} apiKey={key} back={home} needKey={()=>setShowKey(true)}/>}
         {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(p,"collection")}/>}
+        {scr==="faq"&&<FAQ cs={cs} back={home}/>}
       </div>
 
       <footer className="text-stone-400 px-4 py-10 text-xs mt-auto" style={{fontFamily:"system-ui",backgroundColor:"#353A40"}}>
@@ -262,7 +263,7 @@ function Home({cs,go,pickRandom}){
     <section className="px-4 py-12" style={{backgroundColor:"#f5f4f0"}}>
       <div className="max-w-5xl mx-auto">
         <h2 className="text-xl font-bold text-center mb-8 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Začněte podle svého":"Start your own way"}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <button onClick={()=>go("choose")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📋</div>
             <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Procházet vězně":"Browse prisoners"}</div>
@@ -282,6 +283,11 @@ function Home({cs,go,pickRandom}){
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📬</div>
             <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Moje dopisy":"My letters"}</div>
             <div className="text-stone-500 text-sm leading-relaxed">{cs?"Archiv všech dopisů, které jste odeslali přes tento nástroj.":"Archive of all letters you've sent via this tool."}</div>
+          </button>
+          <button onClick={()=>go("faq")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group sm:col-span-2 lg:col-span-1">
+            <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">❓</div>
+            <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{cs?"Časté dotazy":"FAQ"}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{cs?"Odpovědi na nejčastější otázky o psaní dopisů politickým vězňům.":"Answers to the most common questions about writing to political prisoners."}</div>
           </button>
         </div>
       </div>
@@ -554,6 +560,54 @@ function Scan({cs,lang,apiKey,back,needKey}){
     {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{cs?"Rozpoznávám...":"Recognizing..."}</div>}
     {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     {result&&<div className="bg-white border rounded-lg p-5 mt-4"><div className="bg-stone-50 border rounded p-4 text-sm leading-relaxed whitespace-pre-wrap">{result}</div></div>}
+  </div>);
+}
+
+
+function FAQ({cs,back}){
+  const [open,setOpen]=useState(null);
+  const toggle=(i)=>setOpen(open===i?null:i);
+  const qa=[
+    {q:cs?"Jak to, že je tato forma podpory vězňů v Rusku stále povolena?":"How is it that this form of prisoner support in Russia is still allowed?",
+     a:cs?"Ruský trestní zákoník dosud oficiálně umožňuje vězňům korespondenci s vnějším světem a stát je povinen takový kontakt zajistit. Stát v tom nevidí velké riziko, protože celý proces korespondence je kontrolován prostřednictvím cenzury. Nelze však vyloučit, že v budoucnu nebude právo na korespondenci politických vězňů výrazně omezeno.":"The Russian Criminal Code still officially allows prisoners to correspond with the outside world, and the state is obliged to ensure such contact. The state sees no great risk because the entire correspondence process is controlled through censorship. However, we cannot rule out that the right to correspondence for political prisoners may be significantly restricted in the future."},
+    {q:cs?"Čte ty dopisy ruský cenzor?":"Does a Russian censor read the letters?",
+     a:cs?"Ano, veškerá příchozí i odchozí korespondence podléhá cenzuře ze strany vězeňské správy. Přísnost cenzury záleží na konkrétním člověku a obsahu dopisu. Do některých dopisů cenzor nemusí zasáhnout vůbec, jen si to přečte. Má ale právo některé věty vyškrtnout nebo dokonce zabavit celý dopis.":"Yes, all incoming and outgoing correspondence is subject to censorship by the prison administration. The strictness depends on the individual censor and the letter content. Some letters may pass untouched, but the censor has the right to redact sentences or confiscate the entire letter."},
+    {q:cs?"Jak je možné, že někomu lze poslat dopis elektronicky? Mají vězni přístup k internetu?":"How is electronic letter sending possible? Do prisoners have internet access?",
+     a:cs?"Ne, vězni dostávají veškerou korespondenci pouze v papírové podobě. Když odešlete dopis elektronicky (např. přes Prisonmail), dopis se poměrně rychle dostane k cenzorovi, který ho vytiskne, zkontroluje a předá vězni. Pokud si zaplatíte možnost odpovědi, cenzor převezme odpověď od vězně a naskenuje ji.":"No, prisoners receive all correspondence only on paper. When you send a letter electronically (e.g. via Prisonmail), it reaches the censor fairly quickly, who prints, checks, and delivers it. If you pay for a reply option, the censor collects the prisoner's response and scans it."},
+    {q:cs?"Když mi přijde odpověď, jak můžu věřit, že ji skutečně napsal politický vězeň?":"When I get a reply, how can I trust it was actually written by the prisoner?",
+     a:cs?"Odpovědi se ve vězení píšou ručně na papíře, takže jejich autenticitu lze obvykle ověřit podle rukopisu. Navíc je to patrné i z obsahu dopisů, protože vězni zmiňují konkrétní informace ze svého života. Zatím nemáme informace o potvrzených případech, kdy by se zaměstnanci věznice vydávali za politické vězně.":"Replies are handwritten on paper, so authenticity can usually be verified by handwriting. It is also evident from the content, as prisoners mention specific details from their lives. We have no confirmed cases of prison staff impersonating political prisoners."},
+    {q:cs?"Dostanou se moje osobní údaje do rukou FSB?":"Will my personal data reach the FSB?",
+     a:cs?"Všechno, co pošlete do ruského vězení, se dostane do rukou cenzora, a teoreticky se tedy k informacím mohou dostat i další státní orgány. Komunikace s vězni je v Rusku zatím legální a neměly by hrozit žádné následky. Pokud vám vadí samotná představa, můžete vězně podpořit jednorázovou pohlednicí bez osobních údajů, nebo využít Prisonmail se speciální e-mailovou adresou.":"Everything you send to a Russian prison reaches the censor, and theoretically other state bodies including intelligence services could access it. Communication with prisoners is currently legal in Russia with no expected consequences. If this concerns you, you can send a one-time postcard without personal details, or use Prisonmail with a dedicated email address."},
+    {q:cs?"O čem psát a o čem raději nepsat?":"What to write about and what to avoid?",
+     a:cs?"Pište rusky. Žádná politická témata (válka, Ukrajina). Žádná LGBTQ+ tematika. Nekomentovat trestní stíhání adresáta. Nevyzývat k porušování zákonů. Žádná hrubá slova. Nebýt smutný ani sentimentální. Představte se, řekněte kdo jste a proč píšete. Sdílejte pozitivní věci z běžného života. Přejte sílu a zdraví.":"Write in Russian. No political topics (war, Ukraine). No LGBTQ+ themes. Don't comment on the case. Don't call for law-breaking. No profanity. Don't be sad or sentimental. Introduce yourself, say who you are and why you write. Share positive everyday life. Wish strength and health."},
+    {q:cs?"Jak mám na obálce uvést adresu vězně?":"How should I write the prisoner's address on the envelope?",
+     a:cs?"Adresa příjemce se vždy píše v pravém dolním rohu obálky, v azbuce. Formát: jméno a rok narození, název věznice, ulice, město, oblast, PSČ. Na konec přidejte RUSSIA anglicky. Pokud si nejste jistí, že zvládnete azbuku čitelně, vytiskněte adresu a nalepte ji na obálku. Známka patří do pravého horního rohu. Adresa odesílatele (vaše) se píše v levém horním rohu česky.":"The recipient's address goes in the bottom right corner, in Cyrillic. Format: name and birth year, prison name, street, city, region, postal code. Add RUSSIA in English at the end. If unsure about Cyrillic, print the address and stick it on. Stamp goes top right. Sender's address (yours) goes top left in your language."},
+    {q:cs?"Opravdu musím psát rusky?":"Do I really have to write in Russian?",
+     a:cs?"Ano. Nejde o jazykovou vybavenost vězně, ale o cenzora, který musí porozumět celému obsahu dopisu. V naprosté většině případů cenzor nepředá vězni dopis napsaný v jiném jazyce než v ruštině. Náš nástroj vám text přeloží automaticky.":"Yes. It's not about the prisoner's language skills, but the censor who must understand the entire content. In the vast majority of cases, the censor won't deliver a letter in any language other than Russian. Our tool translates your text automatically."},
+    {q:cs?"Jak navázat dlouhodobou korespondenci?":"How to establish long-term correspondence?",
+     a:cs?"Nejjednodušší je vybrat si vězně, s nímž lze komunikovat přes Prisonmail.online. Pokud má daný vězeň možnost odpovídat, může být komunikace poměrně rychlá \u2014 odpovědi mohou chodit už za 7\u201310 dní od odeslání. Doba závisí na situaci vězně i na vytíženosti cenzora.":"The easiest way is to choose a prisoner available on Prisonmail.online. If they can reply, communication can be fairly fast \u2014 replies may come within 7\u201310 days. Timing depends on the prisoner's situation and the censor's workload."},
+    {q:cs?"Pohlednici v obálce, nebo bez?":"Postcard in envelope or without?",
+     a:cs?"Záleží na délce vzkazu. Krátký text (pár vět) pište na levou stranu pohlednice, adresu vpravo dole, známku vpravo nahoře. Pokud se text nevejde, napište ho přes celou zadní stranu a pohlednici vložte do obálky. Nenalepujte na pohlednici papír s textem \u2014 cenzor si může myslet, že se pod ním skrývá šifra.":"Depends on message length. Short text (a few sentences) goes on the left side of the postcard, address bottom right, stamp top right. If the text doesn't fit, write it on the full back and put the postcard in an envelope. Don't stick paper with text onto the postcard \u2014 the censor may suspect a hidden cipher."},
+    {q:cs?"Mohu poslat i balíček s potravinami nebo knihami?":"Can I also send a package with food or books?",
+     a:cs?"Pouze pokud se předem poradíte s rodinou vězně nebo jeho právníky. Vězni mohou během roku přijímat jen omezené množství balíků. Odeslání čehokoliv většího než dopis důrazně doporučujeme konzultovat s koordinační skupinou zřízenou na podporu konkrétního vězně. Krátké literární texty (v ruštině) můžete vložit přímo do dopisu.":"Only if you consult with the prisoner's family or lawyers first. Prisoners can receive a limited number of packages per year. Sending anything larger than a letter should be coordinated with the prisoner's support group. Short literary texts (in Russian) can be included directly in a letter."},
+    {q:cs?"Musím psát ručně? Mohu text na pohlednici nalepit?":"Must I write by hand? Can I stick text onto a postcard?",
+     a:cs?"Papírový dopis můžete napsat na počítači a vložit vytištěný do obálky. Pohlednici ale doporučujeme psát rukou. Nalepený papír může působit podezřele a cenzor si může myslet, že se pod ním skrývá další text nebo šifra \u2014 pravděpodobně ho proto odlepí.":"A paper letter can be typed and printed in an envelope. But we recommend handwriting postcards. Stuck-on paper may look suspicious \u2014 the censor may think it hides additional text or a cipher and will likely peel it off."},
+  ];
+  return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
+    <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>{"\u2190"} {cs?"Zpět":"Back"}</button>
+    <h2 className="text-2xl font-bold mb-2" style={{fontFamily:"system-ui"}}>{"\u2753"} {cs?"Časté dotazy":"FAQ"}</h2>
+    <p className="text-stone-500 text-sm mb-6">{cs?"Odpovědi na nejčastější otázky z workshopů psaní dopisů politickým vězňům.":"Answers to the most common questions from letter-writing workshops."}</p>
+    <div className="space-y-2">
+      {qa.map((item,i)=>(
+        <div key={i} className="border border-stone-200 rounded-lg bg-white overflow-hidden">
+          <button onClick={()=>toggle(i)} className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-stone-50 transition-colors">
+            <span className="font-bold text-sm text-stone-800" style={{fontFamily:"system-ui"}}>{item.q}</span>
+            <span className="text-stone-400 text-lg flex-shrink-0" style={{fontFamily:"system-ui",transform:open===i?"rotate(45deg)":"none",transition:"transform 0.2s"}}>+</span>
+          </button>
+          {open===i&&<div className="px-4 pb-4 text-sm text-stone-600 leading-relaxed border-t border-stone-100 pt-3">{item.a}</div>}
+        </div>
+      ))}
+    </div>
   </div>);
 }
 
