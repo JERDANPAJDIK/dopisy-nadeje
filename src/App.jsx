@@ -93,7 +93,9 @@ Write the letter directly, no headers or labels.`;
 
 const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
 const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
-const sO=(l)=>`OCR+translate handwritten Russian letter. Output:\n## Ruský originál\n[text]\n## ${l==="cs"?"Český překlad":l==="ru"?"Перевод на русский":"English translation"}\n[translation]\nMark illegible [...].`;
+const sO=(l)=>l==="ru"
+  ?`You are an OCR specialist. Recognize the handwritten Russian text from the image. Output the recognized text FAITHFULLY — do not interpret, summarize, or add anything. Mark illegible parts with [...]. Output ONLY the recognized Russian text, nothing else.`
+  :`OCR+translate handwritten Russian letter. First output the recognized Russian text faithfully, then translate. Mark illegible parts with [...]. Output format:\n## ${l==="cs"?"Ruský text":"Russian text"}\n[faithfully recognized text]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation]`;
 const sM=(l)=>`You help match people with political prisoners to write letters to.
 Here is the database of prisoners (JSON): ${JSON.stringify(P.filter(p=>p.o).map(p=>({id:p.i,name:p.ne,age:p.a,prof:p.pe,interests:p.ie,case:p.de,sentence:p.se})))}
 Based on the user's description of themselves, recommend 3 prisoners who would be the best match. For each, explain WHY they're a good match in 1-2 warm, specific sentences.
@@ -595,11 +597,11 @@ function Scan({cs,lang,apiKey,back,needKey}){
   const ref=useRef();
   const resizeImg=(file,maxDim=1200)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.85);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
   const ld=async f=>{if(!f)return;const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev(r.preview);};
-  const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),t("Rozpoznej a přelož tento dopis.","Recognize and translate.","Распознай и переведи это письмо."),img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),t("Rozpoznej a přelož tento dopis.","Recognize and translate.","Распознай текст на изображении. Выведи только распознанный текст."),img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
-    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {t("Rozpoznání a překlad","Scan & Translate","Распознавание и перевод")}</h2>
-    <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken ručně psané odpovědi v ruštině.","Upload a scan of handwritten Russian reply.","Загрузите скан рукописного ответа на русском языке.")}</p>
+    <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {t("Rozpoznání a překlad","Scan & Translate","Распознавание текста")}</h2>
+    <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken ručně psané odpovědi v ruštině.","Upload a scan of handwritten Russian reply.","Загрузите скан или фото рукописного письма.")}</p>
     <input type="file" accept="image/*" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
     {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken","Upload scan","Загрузить скан")}</div></button>
     :<div><img src={prev} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>
