@@ -21,6 +21,21 @@ function checkRate(ip) {
   return { ok: true, remaining: RATE_LIMIT - rec.count };
 }
 
+function errorSSE(msg) {
+  const data = [
+    "event: content_block_delta",
+    `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify("⚠ " + msg)}}}`,
+    "",
+    "event: message_stop",
+    'data: {"type":"message_stop"}',
+    "",
+  ].join("\n");
+  return new Response(data, {
+    status: 200,
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
+}
+
 export default async (req, context) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -103,29 +118,32 @@ async function handleGeminiStream(apiKey, system, messages) {
     }
   }
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] }),
-    }
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 40000);
+
+  let response;
+  try {
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts }] }),
+        signal: controller.signal,
+      }
+    );
+  } catch (e) {
+    clearTimeout(timeout);
+    const msg = e.name === "AbortError" 
+      ? "Gemini API timeout (40s). Try a smaller/clearer image." 
+      : "Gemini API error: " + (e.message || "connection failed");
+    return errorSSE(msg);
+  }
+  clearTimeout(timeout);
 
   if (!response.ok) {
     const err = await response.text();
-    const errSse = [
-      "event: content_block_delta",
-      `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify("Gemini error: " + err.substring(0, 300))}}}`,
-      "",
-      "event: message_stop",
-      'data: {"type":"message_stop"}',
-      "",
-    ].join("\n");
-    return new Response(errSse, {
-      status: 200,
-      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    return errorSSE("Gemini error: " + err.substring(0, 300));
   }
 
   // Transform Gemini SSE → Anthropic SSE on the fly
