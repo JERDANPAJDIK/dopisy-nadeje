@@ -1,3 +1,26 @@
+// --- Rate limiting ---
+const rateMap = new Map();
+const RATE_LIMIT = 30;        // max requests per IP
+const RATE_WINDOW = 3600000;  // per 1 hour (ms)
+
+function checkRate(ip) {
+  const now = Date.now();
+  // cleanup stale entries
+  for (const [k, v] of rateMap) {
+    if (now - v.start > RATE_WINDOW) rateMap.delete(k);
+  }
+  const rec = rateMap.get(ip);
+  if (!rec || now - rec.start > RATE_WINDOW) {
+    rateMap.set(ip, { start: now, count: 1 });
+    return { ok: true, remaining: RATE_LIMIT - 1 };
+  }
+  if (rec.count >= RATE_LIMIT) {
+    return { ok: false, remaining: 0 };
+  }
+  rec.count++;
+  return { ok: true, remaining: RATE_LIMIT - rec.count };
+}
+
 export default async (req, context) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -13,6 +36,17 @@ export default async (req, context) => {
       status: 405, headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Rate limit check
+  const ip = context.ip || req.headers.get("x-forwarded-for") || "unknown";
+  const rate = checkRate(ip);
+  if (!rate.ok) {
+    return new Response(JSON.stringify({ error: { message: "Příliš mnoho požadavků. Zkuste to za chvíli. / Too many requests. Please try again later." } }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": "300" },
+    });
+  }
+
   const anthropicKey = Netlify.env.get("ANTHROPIC_API_KEY");
   const geminiKey = Netlify.env.get("GEMINI_KEY");
   if (!anthropicKey) {
