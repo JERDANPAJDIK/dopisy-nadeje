@@ -271,7 +271,7 @@ function Home({cs,go,pickRandom}){
           <button onClick={()=>go("choose")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📋</div>
             <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Procházet vězně","Browse prisoners","Просмотреть заключённых")}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{lang==="cs"?`Projděte si ${P.filter(p=>p.o).length} profilů, filtrujte podle zájmů a témat.`:lang==="ru"?`Просмотрите ${P.filter(p=>p.o).length} профилей, фильтруйте по интересам и темам.`:`Browse ${P.filter(p=>p.o).length} profiles, filter by interests and topics.`}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{_lang==="cs"?`Projděte si ${P.filter(p=>p.o).length} profilů, filtrujte podle zájmů a témat.`:_lang==="ru"?`Просмотрите ${P.filter(p=>p.o).length} профилей, фильтруйте по интересам и темам.`:`Browse ${P.filter(p=>p.o).length} profiles, filter by interests and topics.`}</div>
           </button>
           <button onClick={()=>{const online=P.filter(p=>p.o);pickRandom(online[Math.floor(Math.random()*online.length)]);}} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">🎲</div>
