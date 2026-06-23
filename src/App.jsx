@@ -84,7 +84,7 @@ async function ai(key,sys,msg,img){
 
 const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
 RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
-TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT.":""} ${sm==="online"?"Max 2400 chars.":""}
+TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
 RULES (read by prison censor):
 1. Output ${l==="cs"?"Czech":"English"} version then Russian version
 2. NO politics/war/Ukraine 3. NO LGBTQ+ 4. Don't comment on their case
@@ -94,7 +94,7 @@ RULES (read by prison censor):
 ## Русская версия
 [text]`;
 
-const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 2400 chars for online. Respond in ${l==="cs"?"Czech":"English"}.`;
+const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":"English"}.`;
 const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
 const sO=(l)=>`OCR+translate handwritten Russian letter. Output:\n## Ruský originál\n[text]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation]\nMark illegible [...].`;
 const sM=(l)=>`You help match people with political prisoners to write letters to.
@@ -180,7 +180,7 @@ export default function App(){
             </div>
             <div className="flex-1">
               <div className="font-bold text-white mb-3 text-sm">{cs?"Spolupráce":"Partnership"}</div>
-              <p className="leading-relaxed text-stone-400 text-xs">{cs?"Tento nástroj vznikl ve spolupráci s ":"This tool was created in cooperation with "}<a href="https://vestochka.io" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Vestochka / OVD-Info</a>{cs?" — lidskoprávní organizací provozující platformu pro psaní dopisů politickým vězňům.":" — a human rights organization running the platform for letters to political prisoners."}</p>
+              <p className="leading-relaxed text-stone-400 text-xs">{cs?"Databáze vězňů vychází z dat ":"Prisoner database based on data from "}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Memorial</a>{cs?" a ":"  and "}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>{cs?".":"."}</p>
             </div>
           </div>
           <div className="border-t border-stone-700 pt-5 flex flex-col sm:flex-row justify-between gap-2 text-stone-500 text-[11px]">
@@ -244,7 +244,7 @@ function Home({cs,go,pickRandom}){
           {[
             {n:"01",t:cs?"Najděte adresáta":"Find a recipient",d:cs?"AI vám doporučí vězně podle vašich zájmů a profese, nebo si vyberete sami z databáze 30+ politických vězňů.":"AI recommends a prisoner based on your interests, or pick yourself from a database of 30+ political prisoners."},
             {n:"02",t:cs?"Napište dopis":"Write a letter",d:cs?"Napište vlastní text, nebo nechte AI připravit návrh. Systém vždy zkontroluje pravidla cenzury, abyste neriskovali zabavení.":"Write your own text, or let AI draft it. Either way, the system checks censorship rules to avoid confiscation."},
-            {n:"03",t:cs?"Odešlete":"Send it",d:cs?"Přes Věstočku zdarma online, přes Prisonmail.online za $1.5, nebo klasickou poštou. Nástroj vás provede.":"Free online via Vestochka, $1.5 via Prisonmail, or by mail. Tool guides you through it."},
+            {n:"03",t:cs?"Odešlete":"Send it",d:cs?"Online přes Prisonmail.online (od $1.5/stránku) nebo klasickou poštou (48 Kč). Nástroj vás provede.":"Online via Prisonmail.online (from $1.5/page) or by regular mail (48 CZK). Tool guides you through it."},
           ].map((s,i)=>
             <div key={i} className="relative">
               <div className="text-red-100 text-7xl font-black absolute -top-4 -left-2 leading-none select-none" style={{fontFamily:"system-ui"}}>{s.n}</div>
@@ -313,7 +313,7 @@ function Home({cs,go,pickRandom}){
             </figure>
           )}
         </div>
-        <p className="text-stone-400 text-xs text-center mt-10 italic">{cs?"Úryvky z archivu projektu Věstočka / OVD-Info":"Excerpts from the Vestochka / OVD-Info archive"}</p>
+        <p className="text-stone-400 text-xs text-center mt-10 italic">{cs?"Úryvky z odpovědí politických vězňů":"Excerpts from political prisoners' replies"}</p>
       </div>
     </section>
   </>);
@@ -468,7 +468,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
         <div className="bg-stone-50 border-l-4 border-red-700 rounded-r p-3 text-sm text-stone-600 italic">
           {cs?"Každý dopis je pro vězněného člověka důkazem, že na něj svět nezapomněl. I pár vět může být jedinou nadějí v šedivém vězeňském dni.":"Every letter proves to a prisoner that the world hasn't forgotten them. Even a few sentences can be the only hope in a gray prison day."}
         </div>
-        {pr.v&&<a href={pr.v} target="_blank" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{cs?"Více o příběhu na Vestochka →":"Read more on Vestochka →"}</a>}
+        {pr.v&&<a href={pr.v} target="_blank" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{cs?"Profil na Vestochka.io →":"Profile on Vestochka.io →"}</a>}
       </div>
     </div>
 
@@ -483,7 +483,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4 text-xs text-stone-600">
         <span className="font-bold text-amber-700" style={{fontFamily:"system-ui"}}>⚠ {cs?"Pravidla":"Rules"}: </span>
         {cs?"Rusky · Žádná politika · Žádná LGBTQ+ · Nekomentovat případ · Nebýt smutný":"Russian only · No politics · No LGBTQ+ · Don't comment case · Don't be sad"}
-        {sm==="online"&&" · Max 2400"}
+        {sm==="online"&&" · Max 21 000 zn. (Prisonmail)"}
       </div>
       <div className="flex border-b border-stone-200 mb-1">
         {[["help","✨ "+(cs?"AI napíše za vás":"AI writes for you")],["check","✓ "+(cs?"Napíšu sám/sama":"I'll write myself")]].map(([k,l])=>
@@ -498,7 +498,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       </>}
       {mode==="check"&&<>
         <textarea value={text} onChange={e=>setText(e.target.value)} placeholder={cs?"Váš text...":"Your text..."} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
-        {sm==="online"&&<div className={`text-right text-xs mt-1 ${text.length>2400?"text-red-600 font-bold":"text-stone-400"}`}>{text.length}/2400</div>}
+        {sm==="online"&&<div className={`text-right text-xs mt-1 ${text.length>21000?"text-red-600 font-bold":"text-stone-400"}`}>{text.length}/21000</div>}
         <div className="flex gap-2 mt-3 flex-wrap">
           <button onClick={chk} disabled={loading||!text.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✓ {cs?"Zkontrolovat":"Check"}</button>
           <button onClick={tr} disabled={loading||!text.trim()} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-5 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🇷🇺 {cs?"Přeložit":"Translate"}</button>
@@ -523,13 +523,12 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
     {(result||trans)&&<div className="bg-stone-50 border border-dashed border-stone-300 rounded-lg p-4 mt-4 text-sm">
       <h4 className="font-bold mb-2" style={{fontFamily:"system-ui"}}>{cs?"Jak odeslat":"How to send"}</h4>
       {sm==="online"?<>
-        <p className="text-stone-500 mb-3">{cs?"Zkopírujte ruský text a vložte ho na jednu z platforem:":"Copy the Russian text and paste it on one of the platforms:"}</p>
+        <p className="text-stone-500 mb-3">{cs?"Zkopírujte ruský text a vložte ho na Prisonmail.online. Budete potřebovat e-mail a platební kartu (uzbecká banka, platba v UZS).":"Copy the Russian text to Prisonmail.online. You will need an email and payment card (Uzbek bank, payment in UZS)."}</p>
         <div className="flex gap-2 flex-wrap">
-          {pr.v&&<a href={pr.v} target="_blank" className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold inline-block" style={{fontFamily:"system-ui"}}>{cs?"Věstočka":"Vestochka"} (EN)</a>}
-          <a href="https://prisonmail.online" target="_blank" className="bg-stone-900 text-white px-4 py-1.5 rounded text-xs font-bold inline-block" style={{fontFamily:"system-ui"}}>Prisonmail (RU, $1.5)</a>
+          <a href="https://prisonmail.online" target="_blank" className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold inline-block" style={{fontFamily:"system-ui"}}>Prisonmail.online (od $1.5/str.)</a>
         </div>
       </>:<>
-        <p className="text-stone-500 mb-2">{cs?"Pošta — osobnější, ale trvá i 2 měsíce. Max 99g. Neposílat doporučeně.":"Mail — more personal, up to 2 months. Max 99g. Don't send registered."}</p>
+        <p className="text-stone-500 mb-2">{cs?"Klasická pošta — osobnější, ale trvá 1-2 měsíce. Obálka max 99g. Posílat ekonomicky (48 Kč), NE doporučeně. Adresu napsat v azbuce, zemi uvést anglicky RUSSIA.":"Regular mail — more personal, takes 1-2 months. Envelope max 99g. Send economy class (48 CZK), NOT registered. Address in Cyrillic, country in English: RUSSIA."}</p>
         {pr.ad&&<div className="bg-white border rounded p-3 font-mono text-xs mb-2">{pr.ad}<br/>RUSSIA</div>}
       </>}
     </div>}
