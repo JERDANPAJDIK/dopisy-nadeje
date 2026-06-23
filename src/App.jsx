@@ -447,6 +447,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Kontroluji...":"Checking...");setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(cs?"Překládám...":"Translating...");setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
+  const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(cs?"Překládám upravenou verzi...":"Translating edited version...");setErr("");setTrans("");try{const r=await ai(apiKey,"The user edited a letter to a Russian political prisoner. The text may contain both Czech/English and Russian parts. Extract ONLY the Czech or English parts (ignore any existing Russian translation), then translate them to natural warm Russian. Output ONLY the Russian translation, nothing else.",result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tips=cs?["Jsem učitel/ka a zajímám se o vzdělávání","Rád/a čtu knihy a chodím do přírody","Jsem student/ka, píšu poprvé","Chci jen popřát hodně sil","Zajímám se o historii"]:["I'm a teacher interested in education","I love reading and nature","I'm a student, first time writing","Just want to wish them strength","I'm into history"];
 
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
@@ -519,6 +520,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       <textarea value={result} onChange={e=>setResult(e.target.value)} className="w-full bg-stone-50 border rounded p-4 text-sm leading-relaxed min-h-[200px] max-h-[400px] resize-y outline-none focus:border-red-600"/>
       <div className="flex gap-2 mt-3 flex-wrap">
         <button onClick={()=>cp(result)} className="bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>{copied?"✓":"📋"} {cs?"Kopírovat":"Copy"}</button>
+        <button onClick={reTr} disabled={loading} className="bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>🇷🇺 {cs?"Přeložit do ruštiny":"Translate to Russian"}</button>
         {!saved&&<button onClick={save} className="bg-stone-200 text-stone-700 px-4 py-1.5 rounded text-xs font-bold" style={{fontFamily:"system-ui"}}>💾 {cs?"Uložit do sbírky":"Save to collection"}</button>}
         {saved&&<span className="text-green-600 text-xs font-bold px-3 py-1.5">✓ {cs?"Uloženo":"Saved"}</span>}
       </div>
