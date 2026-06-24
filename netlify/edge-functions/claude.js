@@ -104,10 +104,12 @@ async function handleClaude(apiKey, system, messages) {
 async function handleGeminiStream(apiKey, system, messages) {
   const parts = [];
   if (system) parts.push({ text: system + "\n\n" });
+  let imageSize = 0;
   for (const msg of messages) {
     if (Array.isArray(msg.content)) {
       for (const c of msg.content) {
         if (c.type === "image") {
+          imageSize += (c.source.data || "").length;
           parts.push({ inline_data: { mime_type: c.source.media_type, data: c.source.data } });
         } else if (c.type === "text") {
           parts.push({ text: c.text });
@@ -116,6 +118,25 @@ async function handleGeminiStream(apiKey, system, messages) {
     } else if (typeof msg.content === "string") {
       parts.push({ text: msg.content });
     }
+  }
+
+  // Quick key test with minimal request
+  try {
+    const testResp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: "Say OK" }] }] }),
+        signal: AbortSignal.timeout(8000),
+      }
+    );
+    if (!testResp.ok) {
+      const errText = await testResp.text();
+      return errorSSE(`Gemini key/model test failed (${testResp.status}): ${errText.substring(0, 200)}`);
+    }
+  } catch (e) {
+    return errorSSE(`Gemini unreachable: ${e.message}. Image base64 size: ${imageSize} chars.`);
   }
 
   const controller = new AbortController();
