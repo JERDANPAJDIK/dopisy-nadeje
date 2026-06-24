@@ -7,9 +7,7 @@ export default async (req, context) => {
   const geminiKey = Netlify.env.get("GEMINI_KEY");
 
   let body;
-  try { body = await req.json(); } catch (e) {
-    return sseText("⚠ Bad JSON body");
-  }
+  try { body = await req.json(); } catch (e) { return sseText("⚠ Bad JSON"); }
 
   const { system, messages } = body;
   const hasImage = messages?.some(m => Array.isArray(m.content) && m.content.some(c => c.type === "image"));
@@ -17,41 +15,70 @@ export default async (req, context) => {
   if (hasImage && geminiKey) {
     const parts = [];
     if (system) parts.push({ text: system });
-    let imgChars = 0;
     for (const msg of messages) {
       if (Array.isArray(msg.content)) {
         for (const c of msg.content) {
-          if (c.type === "image") {
-            imgChars += (c.source.data || "").length;
-            parts.push({ inline_data: { mime_type: c.source.media_type, data: c.source.data } });
-          } else if (c.type === "text") {
-            parts.push({ text: c.text });
-          }
+          if (c.type === "image") parts.push({ inline_data: { mime_type: c.source.media_type, data: c.source.data } });
+          else if (c.type === "text") parts.push({ text: c.text });
         }
       } else if (typeof msg.content === "string") {
         parts.push({ text: msg.content });
       }
     }
 
-    const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiKey;
-    const geminiBody = JSON.stringify({ contents: [{ parts }] });
-
+    let geminiResp;
     try {
-      const result = await Promise.race([
-        (async () => {
-          const r = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
-          if (!r.ok) { const e = await r.text(); return { error: "HTTP " + r.status + ": " + e.substring(0, 300) }; }
-          const d = await r.json();
-          return { text: d?.candidates?.[0]?.content?.parts?.[0]?.text || "Empty response" };
-        })(),
-        new Promise(resolve => setTimeout(() => resolve({ error: "TIMEOUT 15s. Image base64: " + imgChars + " chars, body: " + geminiBody.length + " chars" }), 15000))
-      ]);
-
-      if (result.error) return sseText("⚠ Gemini: " + result.error);
-      return sseText(result.text);
+      geminiResp = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=" + geminiKey,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts }] }) }
+      );
     } catch (e) {
-      return sseText("⚠ Gemini crash: " + (e.message || "unknown"));
+      return sseText("⚠ Gemini connection failed: " + (e.message || ""));
     }
+
+    if (!geminiResp.ok) {
+      const errText = await geminiResp.text();
+      return sseText("⚠ Gemini error (" + geminiResp.status + "): " + errText.substring(0, 300));
+    }
+
+    // Stream-transform Gemini SSE → Anthropic SSE
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const enc = new TextEncoder();
+
+    (async () => {
+      const reader = geminiResp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const raw = line.slice(6).trim();
+            if (!raw || raw === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(raw);
+              const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) {
+                await writer.write(enc.encode("event: content_block_delta\ndata: " + JSON.stringify({type:"content_block_delta",index:0,delta:{type:"text_delta",text}}) + "\n\n"));
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (e) {
+        await writer.write(enc.encode("event: content_block_delta\ndata: " + JSON.stringify({type:"content_block_delta",index:0,delta:{type:"text_delta",text:"⚠ Stream error: "+(e.message||"")}}) + "\n\n"));
+      } finally {
+        await writer.write(enc.encode("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"));
+        await writer.close();
+      }
+    })();
+
+    return new Response(readable, { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
   }
 
   if (!anthropicKey) return sseText("⚠ Missing ANTHROPIC_API_KEY");
