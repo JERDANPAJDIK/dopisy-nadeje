@@ -30,7 +30,7 @@ export default async (req, context) => {
     try {
       geminiResp = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=" + geminiKey,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts }] }) }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts }], generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } } }) }
       );
     } catch (e) {
       return sseText("⚠ Gemini connection failed: " + (e.message || ""));
