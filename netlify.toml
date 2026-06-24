@@ -2,9 +2,6 @@
   publish = "dist" 
   command = "npm run build" 
  
-[functions] 
-  directory = "netlify/functions" 
-  node_bundler = "esbuild" 
  
 [[edge_functions]] 
   function = "claude" 
