@@ -594,6 +594,9 @@ function Scan({cs,lang,apiKey,back,needKey}){
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {t("Rozpoznání a překlad","Scan & Translate","Распознавание текста")}</h2>
     <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken ručně psané odpovědi v ruštině.","Upload a scan of handwritten Russian reply.","Загрузите скан или фото рукописного письма.")}</p>
+<div className="bg-stone-50 border border-stone-200 rounded-md p-3 mb-4 text-xs text-stone-500 leading-relaxed">
+      ℹ {t("Rozpoznání provádí AI a může obsahovat chyby. Data se nepoužívají k trénování modelu. Pokud si nejste jisti správností přepisu, raději si ho ověřte u člověka.","Recognition is performed by AI and may contain errors. Your data is not used to train the model. If you are unsure whether the transcription is correct, have it checked by a person.","Распознавание выполняет ИИ, и в нём возможны ошибки. Данные не используются для обучения модели. Если вы не уверены в правильности распознанного текста, лучше проверьте его у человека.")}
+    </div>
     <input type="file" accept="image/*" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
     {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken","Upload scan","Загрузить скан")}</div></button>
     :<div><img src={prev} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>
