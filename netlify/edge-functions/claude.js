@@ -11,106 +11,147 @@ function checkRate(ip) {
 
 export default async (req, context) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" } });
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
   }
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: { message: "Method not allowed" } }), {
+      status: 405, headers: { "Content-Type": "application/json" },
+    });
+  }
   const ip = context.ip || req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRate(ip)) return new Response(JSON.stringify({ error: { message: "Too many requests" } }), { status: 429, headers: { "Content-Type": "application/json" } });
-
+  if (!checkRate(ip)) {
+    return new Response(JSON.stringify({ error: { message: "Too many requests" } }), { status: 429, headers: { "Content-Type": "application/json" } });
+  }
   const anthropicKey = Netlify.env.get("ANTHROPIC_API_KEY");
   const geminiKey = Netlify.env.get("GEMINI_KEY");
-
-  let body;
-  try { body = await req.json(); } catch (e) { return sseText("Bad JSON"); }
-  const { system, messages } = body;
-  const hasImage = messages?.some(m => Array.isArray(m.content) && m.content.some(c => c.type === "image"));
-
-  if (hasImage && geminiKey) {
-    const parts = [];
-    if (system) parts.push({ text: system + "\n\n" });
-    for (const msg of messages) {
-      if (Array.isArray(msg.content)) {
-        for (const c of msg.content) {
-          if (c.type === "image") parts.push({ inline_data: { mime_type: c.source.media_type, data: c.source.data } });
-          else if (c.type === "text") parts.push({ text: c.text });
-        }
-      } else if (typeof msg.content === "string") parts.push({ text: msg.content });
-    }
-
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    const enc = new TextEncoder();
-    const t0 = Date.now();
-
-    // Heartbeat: send elapsed seconds every 2s so we can see how long Gemini takes
-    let alive = true;
-    (async () => {
-      while (alive) {
-        await new Promise(r => setTimeout(r, 2000));
-        if (!alive) break;
-        const sec = Math.round((Date.now() - t0) / 1000);
-        try { await writer.write(enc.encode(deltaSSE("[" + sec + "s] "))); } catch (_) { break; }
-      }
-    })();
-
-    (async () => {
-      try {
-        const resp = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=" + geminiKey,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts }] }) }
-        );
-        if (!resp.ok) {
-          const e = await resp.text();
-          alive = false;
-          await writer.write(enc.encode(deltaSSE("\nGemini error " + resp.status + ": " + e.substring(0, 200))));
-        } else {
-          const reader = resp.body.getReader();
-          const dec = new TextDecoder();
-          let buf = "";
-          let first = true;
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (first) { alive = false; await writer.write(enc.encode(deltaSSE("\n\n--- Gemini first byte after " + Math.round((Date.now()-t0)/1000) + "s ---\n\n"))); first = false; }
-            buf += dec.decode(value, { stream: true });
-            const lines = buf.split("\n");
-            buf = lines.pop();
-            for (const line of lines) {
-              if (!line.startsWith("data: ")) continue;
-              const raw = line.slice(6).trim();
-              if (!raw || raw === "[DONE]") continue;
-              try { const p = JSON.parse(raw); const txt = p?.candidates?.[0]?.content?.parts?.[0]?.text; if (txt) await writer.write(enc.encode(deltaSSE(txt))); } catch (_) {}
-            }
-          }
-        }
-      } catch (e) {
-        alive = false;
-        await writer.write(enc.encode(deltaSSE("\nFailed: " + (e.message || ""))));
-      } finally {
-        alive = false;
-        await writer.write(enc.encode("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"));
-        await writer.close();
-      }
-    })();
-
-    return new Response(readable, { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+  if (!anthropicKey) {
+    return new Response(JSON.stringify({ error: { message: "Missing ANTHROPIC_API_KEY" } }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
   }
-
-  if (!anthropicKey) return sseText("Missing ANTHROPIC_API_KEY");
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": anthropicKey, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, stream: true, system, messages }),
-  });
-  return new Response(resp.body, { status: resp.status, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+  try {
+    const { system, messages } = await req.json();
+    const hasImage = messages?.some(m =>
+      Array.isArray(m.content) && m.content.some(c => c.type === "image")
+    );
+    if (hasImage && geminiKey) {
+      return await handleGeminiStream(geminiKey, system, messages);
+    }
+    return await handleClaude(anthropicKey, system, messages);
+  } catch (err) {
+    return new Response(JSON.stringify({ error: { message: err.message || "Proxy error" } }), {
+      status: 500, headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
-function deltaSSE(text) {
-  return "event: content_block_delta\ndata: " + JSON.stringify({type:"content_block_delta",index:0,delta:{type:"text_delta",text}}) + "\n\n";
+async function handleClaude(apiKey, system, messages) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, stream: true, system, messages }),
+  });
+  return new Response(response.body, {
+    status: response.status,
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
 }
-function sseText(text) {
-  return new Response(deltaSSE(text) + "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n", { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+
+async function handleGeminiStream(apiKey, system, messages) {
+  const parts = [];
+  if (system) parts.push({ text: system + "\n\n" });
+  for (const msg of messages) {
+    if (Array.isArray(msg.content)) {
+      for (const c of msg.content) {
+        if (c.type === "image") {
+          parts.push({ inline_data: { mime_type: c.source.media_type, data: c.source.data } });
+        } else if (c.type === "text") {
+          parts.push({ text: c.text });
+        }
+      }
+    } else if (typeof msg.content === "string") {
+      parts.push({ text: msg.content });
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts }] }),
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+    const errSse = [
+      "event: content_block_delta",
+      `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify("Gemini error: " + err.substring(0, 300))}}}`,
+      "",
+      "event: message_stop",
+      'data: {"type":"message_stop"}',
+      "",
+    ].join("\n");
+    return new Response(errSse, {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+    });
+  }
+
+  // Transform Gemini SSE → Anthropic SSE on the fly
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const enc = new TextEncoder();
+
+  (async () => {
+    const reader = response.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(raw);
+            const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              const sseChunk =
+                "event: content_block_delta\n" +
+                `data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify(text)}}}\n\n`;
+              await writer.write(enc.encode(sseChunk));
+            }
+          } catch (_) {}
+        }
+      }
+    } finally {
+      const stop = "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+      await writer.write(enc.encode(stop));
+      await writer.close();
+    }
+  })();
+
+  return new Response(readable, {
+    status: 200,
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
 }
 
 export const config = { path: "/api/claude" };
