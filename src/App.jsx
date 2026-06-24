@@ -77,7 +77,8 @@ async function ai(key,sys,msg,img){
   if(img)c.push({type:"image",source:{type:"base64",media_type:img.type,data:img.data}});
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
-  const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
+  const endpoint=img?"https://dopisy-ocr.andrej-novik.workers.dev":"/api/claude";
+  const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
   if(!r.ok){const e=await r.text().catch(()=>"");throw new Error(e||"API error "+r.status);}
   const reader=r.body.getReader();const dec=new TextDecoder();let txt="";while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value,{stream:true}).split("\n")){if(line.startsWith("data: ")){const d=line.slice(6);if(d==="[DONE]")continue;try{const p=JSON.parse(d);if(p.type==="content_block_delta"&&p.delta?.text)txt+=p.delta.text;}catch(e){}}}}return txt||"No response";
 }
