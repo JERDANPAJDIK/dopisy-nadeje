@@ -120,9 +120,7 @@ export default function App(){
   const [lang,setLang]=useState("cs");
   const [scr,setScr]=useState("home");
   const [sel,setSel]=useState(null);
-  const [key,setKey]=useState("server-managed");
-  const [showKey,setShowKey]=useState(false);
-  const [tmpKey,setTmpKey]=useState("");
+  const key="server-managed"; 
   const [letters,setLetters]=useState(()=>{try{const s=localStorage.getItem("dopisy-nadeje-letters");return s?JSON.parse(s):[];}catch(e){return[];}});
   useEffect(()=>{try{localStorage.setItem("dopisy-nadeje-letters",JSON.stringify(letters));}catch(e){}},[letters]);
   const [composeBack,setComposeBack]=useState("home");
@@ -154,9 +152,9 @@ export default function App(){
       <div className="flex-1 flex flex-col">
         {scr==="home"&&<Home cs={cs} go={m=>setScr(m)} pickRandom={p=>goCompose(p,"home")}/>}
         {scr==="choose"&&<Choose cs={cs} lang={lang} back={home} pick={p=>goCompose(p,"choose")}/>}
-        {scr==="match"&&<Match cs={cs} lang={lang} apiKey={key} back={home} pick={p=>goCompose(p,"match")} needKey={()=>setShowKey(true)}/>}
-        {scr==="compose"&&sel&&<Compose cs={cs} lang={lang} pr={sel} apiKey={key} back={()=>setScr(composeBack)} needKey={()=>setShowKey(true)} addLetter={addLetter}/>}
-        {scr==="scan"&&<Scan cs={cs} lang={lang} apiKey={key} back={home} needKey={()=>setShowKey(true)}/>}
+        {scr==="match"&&<Match cs={cs} lang={lang} apiKey={key} back={home} pick={p=>goCompose(p,"match")} needKey={()=>{}}/>}
+        {scr==="compose"&&sel&&<Compose cs={cs} lang={lang} pr={sel} apiKey={key} back={()=>setScr(composeBack)} needKey={()=>{}} addLetter={addLetter}/>}
+        {scr==="scan"&&<Scan cs={cs} lang={lang} apiKey={key} back={home} needKey={()=>{}}/>}
         {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(p,"collection")} remove={removeLetter}/>}
         {scr==="faq"&&<FAQ cs={cs} back={home}/>}
       </div>
@@ -199,15 +197,7 @@ export default function App(){
         </div>
       </footer>
 
-      {showKey&&<div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={()=>setShowKey(false)}>
-        <div className="bg-white rounded-lg p-6 max-w-sm w-full" onClick={e=>e.stopPropagation()}>
-          <h3 className="font-bold text-lg mb-2" style={{fontFamily:"system-ui"}}>{t("Anthropic API klíč","Anthropic API key","Ключ Anthropic API")}</h3>
-          <p className="text-sm text-stone-500 mb-3">{t("Klíč zůstane jen v této relaci.","Key stays in this session only.","Ключ сохраняется только в этой сессии.")}</p>
-          <input type="password" value={tmpKey} onChange={e=>setTmpKey(e.target.value)} placeholder="sk-ant-..." className="w-full border rounded p-2 font-mono text-sm mb-3"/>
-          <button onClick={()=>{setKey(tmpKey);setShowKey(false);}} className="w-full bg-red-700 text-white py-2 rounded font-bold hover:bg-red-800">{t("Uložit","Save","Сохранить")}</button>
-        </div>
-      </div>}
-    </div>
+     </div>
   );
 }
 
