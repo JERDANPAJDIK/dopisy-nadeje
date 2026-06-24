@@ -131,6 +131,7 @@ export default function App(){
   const home=()=>{setScr("home");setSel(null);};
   const needKey=(cb)=>{cb();};
   const addLetter=(pr,txt,dt)=>setLetters(prev=>[{pr,txt,dt:dt||new Date().toLocaleDateString()},...prev]);
+  const removeLetter=(idx)=>setLetters(prev=>prev.filter((_,i)=>i!==idx));
   const goCompose=(p,from)=>{setSel(p);setComposeBack(from);setScr("compose");};
 
   return(
@@ -155,7 +156,7 @@ export default function App(){
         {scr==="match"&&<Match cs={cs} lang={lang} apiKey={key} back={home} pick={p=>goCompose(p,"match")} needKey={()=>setShowKey(true)}/>}
         {scr==="compose"&&sel&&<Compose cs={cs} lang={lang} pr={sel} apiKey={key} back={()=>setScr(composeBack)} needKey={()=>setShowKey(true)} addLetter={addLetter}/>}
         {scr==="scan"&&<Scan cs={cs} lang={lang} apiKey={key} back={home} needKey={()=>setShowKey(true)}/>}
-        {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(p,"collection")}/>}
+        {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(p,"collection")} remove={removeLetter}/>}
         {scr==="faq"&&<FAQ cs={cs} back={home}/>}
       </div>
 
@@ -227,7 +228,7 @@ function Home({cs,go,pickRandom}){
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"/>
             <span className="text-red-300 text-[10px] font-bold tracking-[2px] uppercase" style={{fontFamily:"system-ui"}}>2 136 {t("vězňů","prisoners","заключённых")} · {t("Rusko","Russia","Россия")} · 2026</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-5" style={{fontFamily:"system-ui",lineHeight:1.0,letterSpacing:"-0.02em"}}>{t("Napište dopis.","Write a letter.","Напишите письмо.")}<br/><span className="text-red-400">{t("Změňte něčí den.","Change someone's day.","Измените чей-то день.")}</span></h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-5" style={{fontFamily:"system-ui",lineHeight:1.0,letterSpacing:"-0.02em"}}>{t("Napište dopis.","Write a letter.","Напишите письмо.")}<br/><span className="text-red-400">{t("Změňte něčí den.","Change someone's day.","Подарите надежду.")}</span></h1>
           <p className="text-white text-base leading-relaxed mb-2 max-w-md font-medium" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{t("V ruských věznicích sedí přes 2 100 lidí za své politické názory.","Over 2,100 people sit in Russian prisons for their political views.","Более 2 100 человек находятся в российских тюрьмах за свои политические взгляды.")}</p>
           <p className="text-stone-200 text-sm leading-relaxed mb-7 max-w-md" style={{textShadow:"0 1px 3px rgba(0,0,0,0.5)"}}>{t("Najdeme vám vhodného adresáta. Pomůžeme napsat dopis v češtině i ruštině. Zkontrolujeme pravidla cenzury. Poradíme s odesláním.","We help you find a recipient, write a letter in your language and Russian, check censorship rules, and guide you through sending.","Поможем найти адресата. Поможем написать письмо. Проверим на соответствие правилам цензуры. Подскажем, как отправить.")}</p>
           <button onClick={()=>go("match")} className="bg-red-600 hover:bg-red-700 text-white px-7 py-4 rounded-lg transition-all shadow-2xl hover:shadow-red-900/50 group inline-flex items-center gap-4">
@@ -661,7 +662,7 @@ function FAQ({cs,back}){
   </div>);
 }
 
-function Collection({cs,letters,back,pick}){
+function Collection({cs,letters,back,pick,remove}){
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>📬 {t("Moje dopisy","My letters","Мои письма")}</h2>
@@ -672,9 +673,12 @@ function Collection({cs,letters,back,pick}){
     </div>:
     <div className="space-y-3">{letters.map((l,i)=>
       <div key={i} className="bg-white border border-stone-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 gap-2">
           <button onClick={()=>pick(l.pr)} className="font-bold text-sm text-red-700 hover:underline" style={{fontFamily:"system-ui"}}>{cs?l.pr.n:l.pr.ne}</button>
-          <span className="text-xs text-stone-400">{l.dt}</span>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-xs text-stone-400">{l.dt}</span>
+            <button onClick={()=>{if(confirm(t("Opravdu smazat tento dopis?","Delete this letter?","Удалить это письмо?")))remove(i);}} className="text-stone-300 hover:text-red-600 transition-colors" title={t("Smazat","Delete","Удалить")} aria-label={t("Smazat","Delete","Удалить")}>🗑</button>
+          </div>
         </div>
         <div className="text-xs text-stone-500 leading-relaxed line-clamp-3">{l.txt?.substring(0,200)}...</div>
       </div>
