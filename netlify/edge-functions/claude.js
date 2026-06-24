@@ -29,7 +29,7 @@ export default async (req, context) => {
     let geminiResp;
     try {
       geminiResp = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=" + geminiKey,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:streamGenerateContent?alt=sse&key=" + geminiKey,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts }] }) }
       );
     } catch (e) {
