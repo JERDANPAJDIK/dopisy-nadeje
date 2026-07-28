@@ -74,7 +74,7 @@ function fz(q,p,cs){
 
 async function ai(key,sys,msg,img){
   const c=[];
-  if(img)c.push({type:"image",source:{type:"base64",media_type:img.type,data:img.data}});
+  if(img){const isPdf=img.type==="application/pdf";c.push({type:isPdf?"document":"image",source:{type:"base64",media_type:img.type,data:img.data}});}
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
   const endpoint=img?"https://dopisy-ocr.andrej-novik.workers.dev":"/api/claude";
@@ -634,20 +634,26 @@ function Scan({cs,lang,apiKey,back,needKey}){
   const [loading,setLoading]=useState(false);const [result,setResult]=useState(null);const [err,setErr]=useState("");
   const ref=useRef();
   const resizeImg=(file,maxDim=1500)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.75);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
-  const ld=async f=>{if(!f)return;const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev(r.preview);};
+  const readRaw=(file)=>new Promise((res,rej)=>{const rd=new FileReader();rd.onload=e=>{const d=e.target.result;res({type:file.type,data:d.split(",")[1]});};rd.onerror=()=>rej(new Error("read error"));rd.readAsDataURL(file);});
+  const ld=async f=>{if(!f)return;setErr("");setResult(null);
+    if(f.type==="application/pdf"){
+      if(f.size>14*1024*1024){setErr(t("PDF je příliš velké (max 14 MB). Zkuste ho zmenšit nebo pošlete jednotlivé stránky jako obrázky.","PDF is too large (max 14 MB). Try compressing it or send individual pages as images.","PDF слишком большой (макс. 14 МБ). Попробуйте сжать его или отправьте страницы как изображения."));return;}
+      const r=await readRaw(f);setImg({type:r.type,data:r.data});setPrev({pdf:true,name:f.name});return;
+    }
+    const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev({img:r.preview});};
   const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),t("Rozpoznej a přelož tento dopis.","Recognize and translate.","Распознай текст на изображении. Выведи только распознанный текст."),img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>📷 {t("Rozpoznání a překlad","Scan & Translate","Распознавание текста")}</h2>
-    <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken ručně psané odpovědi v ruštině.","Upload a scan of handwritten Russian reply.","Загрузите скан или фото рукописного письма.")}</p>
+    <p className="text-stone-500 text-sm mb-4">{t("Nahrajte sken nebo PDF ručně psané odpovědi v ruštině.","Upload a scan or PDF of a handwritten Russian reply.","Загрузите скан, фото или PDF рукописного письма.")}</p>
 <div className="bg-stone-50 border border-stone-200 rounded-md p-3 mb-4 text-xs text-stone-500 leading-relaxed">
       ℹ {t("Rozpoznání provádí AI a může obsahovat chyby. Data se nepoužívají k trénování modelu. Pokud si nejste jisti správností přepisu, raději si ho ověřte u člověka.","Recognition is performed by AI and may contain errors. Your data is not used to train the model. If you are unsure whether the transcription is correct, have it checked by a person.","Распознавание выполняет ИИ, и в нём возможны ошибки. Данные не используются для обучения модели. Если вы не уверены в правильности распознанного текста, лучше проверьте его у человека.")}
     </div>
-    <input type="file" accept="image/*" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
-    {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken","Upload scan","Загрузить скан")}</div></button>
-    :<div><img src={prev} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>
+    <input type="file" accept="image/*,application/pdf" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
+    {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken nebo PDF","Upload scan or PDF","Загрузить скан или PDF")}</div></button>
+    :<div>{prev.pdf?<div className="flex items-center gap-3 bg-stone-50 border rounded-lg p-4 mb-3"><div className="text-3xl">📄</div><div className="text-sm text-stone-600 break-all">{prev.name}</div></div>:<img src={prev.img} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>}
       <div className="flex gap-2"><button onClick={go} disabled={loading} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🔍 {t("Rozpoznat","Recognize","Распознать")}</button>
-      <button onClick={()=>{setPrev(null);setImg(null);setResult(null);}} className="text-stone-400 text-sm px-3">{t("Jiný soubor","Different file","Другой файл")}</button></div></div>}
+      <button onClick={()=>{setPrev(null);setImg(null);setResult(null);setErr("");}} className="text-stone-400 text-sm px-3">{t("Jiný soubor","Different file","Другой файл")}</button></div></div>}
     {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{t("Rozpoznávám...","Recognizing...","Распознаю...")}</div>}
     {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     {result&&<div className="bg-white border rounded-lg p-5 mt-4"><div className="bg-stone-50 border rounded p-4 text-sm leading-relaxed whitespace-pre-wrap">{result}</div></div>}
