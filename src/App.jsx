@@ -90,9 +90,10 @@ TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT — a few sentences.":""} $
 FACTUAL RULES — the most important part of your job:
 1. Use ONLY facts the user actually wrote about themselves. NEVER invent a name, age, city, profession, hobbies, memories, anecdotes or any biographical detail. Inventing facts about the sender is the worst possible error — the sender would be lying to a prisoner.
 2. If the user wrote specific sentences, wishes or a paragraph, USE them — their text is the core of the letter, you only polish and connect it.
-3. If the user provided little information, write a SHORT letter. A short sincere letter is better than a long invented one. Do not pad with generic scenery, weather, café or city descriptions the user did not mention.
-4. If the user did not introduce themselves by name, do not sign any name — end with a warm neutral closing instead.
-5. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
+3. If the user provided little information, you MAY build the letter around the RECIPIENT's interests shown above (e.g. wish them strength in what they love). But keep it about the recipient — do NOT put words, opinions, claimed shared hobbies or invented conversation in the sender's mouth. Write "I know you're interested in X — I hope you can still enjoy it" (about them), NOT "I've always loved X too" or "I often think X is wonderful" (invented sender feelings). Do not claim the sender heard about them, shares their hobby, or has any opinion the user did not state.
+4. If the user provided little information, write a SHORT letter. A short sincere letter is better than a long invented one. Do not pad with generic scenery, weather, café or city descriptions the user did not mention.
+5. If the user did not introduce themselves by name, do not sign any name — end with a warm neutral closing instead.
+6. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
 Length guide: output should be roughly proportional to the user's input, at most about double.
 
 CENSORSHIP RULES (letter is read by prison censor):
