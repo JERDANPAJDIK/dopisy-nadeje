@@ -96,6 +96,8 @@ FACTUAL RULES — the most important part of your job:
 6. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
 Length guide: output should be roughly proportional to the user's input, at most about double.
 
+GENDER: FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, fall back to gender-neutral phrasing: prefer present-tense or neutral constructions ("posílám Vám přání", "chci Vám popřát"; in Russian "я пишу", "я хочу пожелать", "шлю Вам"). In that fallback case NEVER write dual endings with a slash (e.g. "chtěl/a", "написал(а)") — that must never appear in the final letter.
+
 CENSORSHIP RULES (letter is read by prison censor):
 NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
 Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels.`;
@@ -116,7 +118,7 @@ OUTPUT FORMAT — be brief:
 - If there are problems: list ONLY the problematic quotes, each with a one-sentence reason and a suggested replacement. Nothing about the rules that are satisfied.
 - Mention length ONLY if the letter exceeds 21000 characters (prisonmail.online limit).
 Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
-const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
+const sT=`Translate to natural warm Russian for a letter to a prisoner. If the sender's gender is clear from the text (name, signature, gendered wording), keep the matching Russian forms. Only if it cannot be determined, avoid gendered past-tense verbs for the sender — prefer present tense ("я пишу", "хочу пожелать", "шлю") and never output dual forms like "написал(а)". Output ONLY Russian text.`;
 const sO=(l)=>l==="ru"
   ?`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written, character by character. Critical rules: (1) Transcribe ONLY what you can actually read. (2) If a word is completely illegible, write [неразборчиво]. (3) If you can partially read a word but are unsure, write your best reading followed by (?) — e.g. "посылку(?)". (4) NEVER invent text to make sentences flow — broken or incomplete text is fine and expected. (5) Do NOT complete or "improve" anything. (6) Preserve original line breaks. Inventing plausible text is the worst possible error; uncertainty markers are always better. Output ONLY the transcribed Russian text.`
   :`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written. If a word is illegible write [...]; if partially readable but unsure, write your best guess with (?) after it. NEVER invent text to make sentences flow — broken text is expected and fine. Then translate only what was transcribed. Output format:\n## ${l==="cs"?"Ruský text":"Russian text"}\n[exact transcription with [...] and (?) markers]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation of what was actually transcribed]`;
