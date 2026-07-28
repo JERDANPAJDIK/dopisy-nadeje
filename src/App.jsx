@@ -85,23 +85,46 @@ async function ai(key,sys,msg,img){
 
 const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
 RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
-TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
-RULES (read by prison censor):
-1. Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation
-2. NO politics/war/Ukraine 3. NO LGBTQ+ 4. Don't comment on their case
-5. No profanity 6. NOT sad, don't pity 7. DO: introduce yourself, share positive life, wish strength
-Write the letter directly, no headers or labels.`;
+TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT — a few sentences.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
 
-const sC=(l)=>`Check letter to Russian political prisoner against censor rules: No politics/war/Ukraine, no LGBTQ+, no case comments, no law-breaking calls, no profanity, not sad. Quote issues, suggest fixes. Max 21000 chars for online (prisonmail.online). Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
+FACTUAL RULES — the most important part of your job:
+1. Use ONLY facts the user actually wrote about themselves. NEVER invent a name, age, city, profession, hobbies, memories, anecdotes or any biographical detail. Inventing facts about the sender is the worst possible error — the sender would be lying to a prisoner.
+2. If the user wrote specific sentences, wishes or a paragraph, USE them — their text is the core of the letter, you only polish and connect it.
+3. If the user provided little information, write a SHORT letter. A short sincere letter is better than a long invented one. Do not pad with generic scenery, weather, café or city descriptions the user did not mention.
+4. If the user did not introduce themselves by name, do not sign any name — end with a warm neutral closing instead.
+5. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
+Length guide: output should be roughly proportional to the user's input, at most about double.
+
+CENSORSHIP RULES (letter is read by prison censor):
+NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
+Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels.`;
+
+const sC=(l)=>`Check a letter to a Russian political prisoner against prison censor rules.
+
+REAL problems (flag these): explicit politics, the war, Ukraine, criticism of the state or courts; LGBTQ+ topics; direct commentary on the addressee's criminal case, verdict or its injustice; calls to break rules/law; profanity; an overall bleak, hopeless tone.
+
+NOT problems (never flag these — letters with such phrases routinely pass real censorship):
+- warm sympathy or admiration: "ваша история меня тронула", "вы большая молодец", "выражаю поддержку и восхищение", "вы оказались неравнодушны к происходящему"
+- general life worries: "в мире много страдания", "последние годы тревожно"
+- mentioning that the person is in prison, asking about daily life in the facility, or hoping they stay strong — the addressee IS in prison, this is normal
+- personal facts about the sender (family, marriage, faith, doubts, self-deprecating remarks)
+Only flag a sentence if a censor would PLAUSIBLY reject it. When unsure, do not flag. Overcautious flagging wastes the writer's effort and discourages them.
+
+OUTPUT FORMAT — be brief:
+- If the letter is fine: reply with 1-2 sentences saying it should pass censorship, nothing else. No tables, no checklists, no rule-by-rule breakdown, no length commentary.
+- If there are problems: list ONLY the problematic quotes, each with a one-sentence reason and a suggested replacement. Nothing about the rules that are satisfied.
+- Mention length ONLY if the letter exceeds 21000 characters (prisonmail.online limit).
+Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
 const sT=`Translate to natural warm Russian for a letter to a prisoner. Output ONLY Russian text.`;
 const sO=(l)=>l==="ru"
   ?`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written, character by character. Critical rules: (1) Transcribe ONLY what you can actually read. (2) If a word is completely illegible, write [неразборчиво]. (3) If you can partially read a word but are unsure, write your best reading followed by (?) — e.g. "посылку(?)". (4) NEVER invent text to make sentences flow — broken or incomplete text is fine and expected. (5) Do NOT complete or "improve" anything. (6) Preserve original line breaks. Inventing plausible text is the worst possible error; uncertainty markers are always better. Output ONLY the transcribed Russian text.`
   :`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written. If a word is illegible write [...]; if partially readable but unsure, write your best guess with (?) after it. NEVER invent text to make sentences flow — broken text is expected and fine. Then translate only what was transcribed. Output format:\n## ${l==="cs"?"Ruský text":"Russian text"}\n[exact transcription with [...] and (?) markers]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation of what was actually transcribed]`;
 const sM=(l)=>`You help match people with political prisoners to write letters to.
 Here is the database of prisoners (JSON): ${JSON.stringify(P.filter(p=>p.o).map(p=>({id:p.i,name:p.ne,age:p.a,prof:p.pe,interests:p.ie,case:p.de,sentence:p.se})))}
-Based on the user's description of themselves, recommend 3 prisoners who would be the best match. For each, explain WHY they're a good match in 1-2 warm, specific sentences.
+Based on the user's description of themselves, recommend 3 prisoners who would be the best match.
+For each pick write a FACTUAL reason: 1-2 plain sentences stating who the prisoner is and what they were convicted for, taken strictly from the database. If the user and prisoner share a concrete attribute (same profession, similar age, same stated interest), you may state it plainly in one clause. FORBIDDEN: invented emotional resonance, flattery, or speculation about the user ("as an architect you surely know...", "as a believer you have a unique opportunity..."). Never attribute feelings, knowledge or experiences to the user. If nothing concrete is shared, just describe the prisoner — that is enough.
 Respond ONLY with valid JSON in this exact format, nothing else (no markdown, no preamble):
-{"intro":"short opening sentence in ${l==="cs"?"Czech":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"1-2 sentences in ${l==="cs"?"Czech":"English"} explaining why this is a good match"}]}
+{"intro":"short neutral opening sentence in ${l==="cs"?"Czech":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"1-2 factual sentences in ${l==="cs"?"Czech":"English"}"}]}
 The picks array must have exactly 3 items. Use the exact id values from the database.`;
 
 
@@ -115,6 +138,11 @@ const Logo=({small}={})=><img src={LOGO_SRC} alt="Gulag.cz" className={small?"h-
 
 let _lang = "cs";
 const t = (c, e, r) => _lang === "cs" ? c : _lang === "ru" ? r : e;
+const sentLbl = (p) => {
+  const v = _lang === "cs" ? p.s : _lang === "ru" ? (p.sr || p.se) : p.se;
+  if (!v || !/^\d/.test(v)) return v;
+  return v + (_lang === "cs" ? " vězení" : _lang === "ru" ? " заключения" : " in prison");
+};
 
 export default function App(){
   const [lang,setLang]=useState("cs");
@@ -348,7 +376,7 @@ function Choose({cs,lang,back,pick}){
           <div className="w-9 h-9 bg-stone-200 rounded-full flex items-center justify-center text-stone-500 font-bold text-xs flex-shrink-0" style={{fontFamily:"system-ui"}}>{(_lang==="cs"?p.n:_lang==="ru"?(p.nr||p.ne):p.ne).charAt(0)}</div>
           <div><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{_lang==="cs"?p.n:_lang==="ru"?(p.nr||p.ne):p.ne}</div><div className="text-[11px] text-stone-400">{p.a} {t("let","yo","лет")} · {_lang==="cs"?p.p:_lang==="ru"?(p.pru||p.pe):p.pe}</div></div>
         </div>
-        <div className="text-[11px] text-red-700 font-medium mb-1" style={{fontFamily:"system-ui"}}>{_lang==="cs"?p.s:_lang==="ru"?(p.sr||p.se):p.se}</div>
+        <div className="text-[11px] text-red-700 font-medium mb-1" style={{fontFamily:"system-ui"}}>{sentLbl(p)}</div>
         <div className="text-xs text-stone-500 leading-relaxed">{_lang==="cs"?p.d:_lang==="ru"?(p.dr||p.de):p.de}</div>
         <div className="flex flex-wrap gap-1 mt-2">
           {p.o&&<span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded" style={{fontFamily:"system-ui"}}>✉ Online</span>}
@@ -461,7 +489,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
             <div className="text-stone-300 text-sm">{pr.a} {t("let","years old","лет")} · {_lang==="cs"?pr.p:_lang==="ru"?(pr.pru||pr.pe):pr.pe}</div>
           </div>
           <div className="text-right">
-            <div className="text-red-400 font-bold text-sm" style={{fontFamily:"system-ui"}}>{_lang==="cs"?pr.s:_lang==="ru"?(pr.sr||pr.se):pr.se}</div>
+            <div className="text-red-400 font-bold text-sm" style={{fontFamily:"system-ui"}}>{sentLbl(pr)}</div>
             {pr.o&&<div className="text-stone-300 text-[10px] mt-1" style={{fontFamily:"system-ui"}}>✉ {t("Lze psát online","Online letters available","Можно писать онлайн")}</div>}
           </div>
         </div>
@@ -540,7 +568,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
           <div className="bg-white rounded p-3 border"><strong>2.</strong> {t("Připravte si dopis v ruštině. Maximální délka: 21 000 znaků včetně mezer.","Prepare your letter in Russian. Maximum length: 21,000 characters including spaces.","Подготовьте письмо на русском языке. Максимальная длина: 21 000 знаков с пробелами.")}</div>
           <div className="bg-white rounded p-3 border"><strong>3.</strong> {t("Na prisonmail.online vyberte oblast, kde se věznice nachází, a pak konkrétní věznici.","On prisonmail.online, select the region where the prison is located, then the specific facility.","На prisonmail.online выберите регион, где находится учреждение, затем конкретную колонию.")}</div>
           <div className="bg-white rounded p-3 border"><strong>4.</strong> {t("Vyplňte údaje o vězni: příjmení, jméno, jméno po otci a rok narození — vše rusky, bez chyb.","Enter the prisoner's details: last name, first name, middle name, and year of birth — all in Russian, without errors.","Заполните данные заключённого: фамилию, имя, отчество и год рождения — без ошибок.")}</div>
-          <div className="bg-white rounded p-3 border"><strong>5.</strong> {t("Vyplňte své údaje: jméno, telefon a e-mail (klidně latinkou, bez diakritiky). E-mail musí fungovat — sem přijdou odpovědi.","Enter your details: name, phone, and email (Latin script OK, no diacritics). Email must work — replies come here.","Укажите свои данные: имя, телефон и e-mail (можно латиницей). E-mail должен быть рабочим — туда придут ответы.")}</div>
+          <div className="bg-white rounded p-3 border"><strong>5.</strong> {t("Vyplňte své údaje. Pole Sender full name musí obsahovat jméno a příjmení výhradně azbukou — latinkou dopis neprojde cenzurou. Nemusí to být vaše skutečné jméno; s přepisem do azbuky pomůže překladač a drobná chyba v přepisu nevadí. E-mail musí fungovat — sem přijdou odpovědi.","Enter your details. The Sender full name field must contain a first and last name written entirely in Cyrillic — letters with a Latin-script sender name will not pass the censor. It does not have to be your real name; an online translator can help transliterate it, and a small error in the transliteration is fine. Email must work — replies come here.","Укажите свои данные. Поле Sender full name должно содержать имя и фамилию исключительно кириллицей — с именем латиницей письмо не пройдёт цензуру. Это не обязательно ваше настоящее имя. E-mail должен быть рабочим — туда придут ответы.")}</div>
           <div className="bg-white rounded p-3 border"><strong>6.</strong> {t("Vložte text dopisu. Volitelně zaškrtněte odpověď (+$1.5) a/nebo obrázek (+$1.5). Obrázek cenzor vytiskne černobíle — může to být příroda, zvířata, fotka města, kresba (nic politického).","Paste your letter text. Optionally check reply (+$1.5) and/or image (+$1.5). The censor prints images in B&W — nature, animals, city photos, drawings are fine (nothing political).","Вставьте текст письма. По желанию отметьте получение ответа (+$1.5) и/или картинку (+$1.5). Цензор распечатает изображение ч/б — подойдёт природа, животные, фото города, рисунок (ничего политического).")}</div>
           <div className="bg-white rounded p-3 border"><strong>7.</strong> {t("Zkontrolujte údaje a zaplaťte. Cena: $1.5 za stránku textu + volitelné příplatky. Platbu zpracovává uzbecká banka (Octobank), částka se zobrazí v UZS.","Check details and pay. Price: $1.5 per page + optional extras. Payment processed by Uzbek bank (Octobank), amount shown in UZS.","Проверьте данные и оплатите. Цена: $1.5 за страницу текста + доп. услуги. Платёж обрабатывает узбекский банк (Octobank), сумма отображается в UZS.")}</div>
           <div className="bg-white rounded p-3 border"><strong>8.</strong> {t("Po odeslání dostanete e-mailem potvrzení. Další mail přijde, až bude dopis předán adresátovi. Pokud jste zaplatili odpověď, přijde naskenovaná mailem.","You will receive email confirmation after sending. Another email arrives when the letter is delivered. If you paid for a reply, it comes scanned via email.","После отправки вы получите подтверждение по e-mail. Ещё одно письмо придёт, когда письмо будет вручено адресату. Если вы оплатили ответ, он придёт в виде скана на e-mail.")}</div>
@@ -634,7 +662,7 @@ function FAQ({cs,back}){
     {q:t("Pohlednici v obálce, nebo bez?","Postcard in envelope or without?","Открытку в конверте или без?"),
      a:t("Záleží na délce vzkazu. Krátký text (pár vět) pište na levou stranu pohlednice, adresu vpravo dole, známku vpravo nahoře. Pokud se text nevejde, napište ho přes celou zadní stranu a pohlednici vložte do obálky. Nenalepujte na pohlednici papír s textem \u2014 cenzor si může myslet, že se pod ním skrývá šifra.","Depends on message length. Short text (a few sentences) goes on the left side of the postcard, address bottom right, stamp top right. If the text doesn't fit, write it on the full back and put the postcard in an envelope. Don't stick paper with text onto the postcard \u2014 the censor may suspect a hidden cipher.","Зависит от длины сообщения. Короткий текст пишите на левой стороне открытки, адрес — справа внизу, марку — справа вверху. Если текст не помещается, напишите его на всей задней стороне и вложите открытку в конверт. Не наклеивайте бумагу с текстом — цензор может заподозрить шифр.")},
     {q:t("Mohu poslat i balíček s potravinami nebo knihami?","Can I also send a package with food or books?","Можно ли отправить посылку с едой или книгами?"),
-     a:t("Pouze pokud se předem poradíte s rodinou vězně nebo jeho právníky. Vězni mohou během roku přijímat jen omezené množství balíků. Odeslání čehokoliv většího než dopis důrazně doporučujeme konzultovat s koordinační skupinou zřízenou na podporu konkrétního vězně. Krátké literární texty (v ruštině) můžete vložit přímo do dopisu.","Only if you consult with the prisoner's family or lawyers first. Prisoners can receive a limited number of packages per year. Sending anything larger than a letter should be coordinated with the prisoner's support group. Short literary texts (in Russian) can be included directly in a letter.","Только если вы предварительно посоветуетесь с семьёй заключённого или его адвокатами. Заключённые могут получать ограниченное количество посылок в год. Отправку чего-либо крупнее письма настоятельно рекомендуем согласовать с группой поддержки конкретного заключённого. Короткие литературные тексты (на русском) можно вложить прямо в письмо.")},
+     a:t("Pouze pokud se předem poradíte s rodinou vězně nebo jeho právníky. Vězni mohou během roku přijímat jen omezené množství balíků. Odeslání čehokoliv většího než dopis důrazně doporučujeme konzultovat s koordinační skupinou zřízenou na podporu konkrétního vězně.","Only if you consult with the prisoner's family or lawyers first. Prisoners can receive a limited number of packages per year. Sending anything larger than a letter should be coordinated with the prisoner's support group.","Только если вы предварительно посоветуетесь с семьёй заключённого или его адвокатами. Заключённые могут получать ограниченное количество посылок в год. Отправку чего-либо крупнее письма настоятельно рекомендуем согласовать с группой поддержки конкретного заключённого.")},
     {q:t("Musím psát ručně? Mohu text na pohlednici nalepit?","Must I write by hand? Can I stick text onto a postcard?","Нужно ли писать от руки? Можно ли наклеить текст на открытку?"),
      a:t("Papírový dopis můžete napsat na počítači a vložit vytištěný do obálky. Pohlednici ale doporučujeme psát rukou. Nalepený papír může působit podezřele a cenzor si může myslet, že se pod ním skrývá další text nebo šifra \u2014 pravděpodobně ho proto odlepí.","A paper letter can be typed and printed in an envelope. But we recommend handwriting postcards. Stuck-on paper may look suspicious \u2014 the censor may think it hides additional text or a cipher and will likely peel it off.","Бумажное письмо можно набрать на компьютере и вложить распечатку в конверт. Открытку же рекомендуем писать от руки. Наклеенная бумага может вызвать подозрения — цензор может решить, что под ней скрыт текст или шифр, и скорее всего её отклеит.")},
   ];
