@@ -100,7 +100,7 @@ GENDER: FIRST, follow the sender's own gender. If the user stated or implied the
 
 CENSORSHIP RULES (letter is read by prison censor):
 NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
-Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels.`;
+Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels. Do NOT think out loud, do NOT include corrections, drafts, or meta-notes like "(let me correct that)" or separator lines — output only the single finished letter, ready to copy.`;
 
 const sC=(l)=>`Check a letter to a Russian political prisoner against prison censor rules.
 
@@ -145,6 +145,21 @@ const sentLbl = (p) => {
   const v = _lang === "cs" ? p.s : _lang === "ru" ? (p.sr || p.se) : p.se;
   if (!v || !/^\d/.test(v)) return v;
   return v + (_lang === "cs" ? " vězení" : _lang === "ru" ? " заключения" : " in prison");
+};
+// Safety net: if the model thought out loud and self-corrected, keep only the final letter.
+const cleanLetter = (s) => {
+  if (!s) return s;
+  let out = s.trim();
+  const markers = [/\(\s*opravuji se\s*\)/i, /\(\s*let me correct[^)]*\)/i, /\(\s*исправляюсь\s*\)/i, /\(\s*поправка\s*\)/i];
+  for (const m of markers) {
+    let idx = -1, mm;
+    const g = new RegExp(m.source, "gi");
+    while ((mm = g.exec(out)) !== null) idx = mm.index + mm[0].length;
+    if (idx > -1) out = out.slice(idx);
+  }
+  // Drop leading separator lines / dangling fragments left before the real letter.
+  out = out.replace(/^(\s*[-–—*_]{2,}\s*)+/g, "");
+  return out.trim();
 };
 
 export default function App(){
@@ -472,7 +487,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [saved,setSaved]=useState(false);
   const [showGuide,setShowGuide]=useState(false);
   const cp=t=>{try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch(e){}};
-  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);setResult(cleanLetter(r));}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Kontroluji...","Checking...","Проверяю..."));setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Překládám...","Translating...","Перевожу..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
