@@ -27,6 +27,7 @@ Aktualizováno: 2026-09-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`),
 
 **Nízká**
 - `sW-long-input-kept` kolísá (~91 % běhů): občas „Jako knihovník bych se rád zeptal…“ navzdory zákazu.
+  Otázka na příště: je to opravdu vymyšlené, nebo jen přeformulování toho, co uživatel napsal (je knihovník a ptá se na knihy)? Pokud to druhé, uvolnit test a zrušit zákaz „Jako + profese“ v `sW`.
 - OCR rukopisu Poljudové: few-shot příklady.
 - `netlify/edge-functions/claude.js` má nepoužívanou Gemini větev (obrázky jdou na Worker) – uklidit.
 - Evaly: každý případ běží 3×, modely kolísají; sledovat procenta v REPORT.md.
