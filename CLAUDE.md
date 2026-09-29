@@ -17,3 +17,4 @@
 - Funkce `t()` a proměnná `_lang` musí zůstat definované na úrovni modulu.
 - V dceřiných komponentách používej `_lang`, nikdy `lang`.
 - V JS stringech nepoužívej české typografické uvozovky („ “).
+- Nepoužívej regex lookbehind (`(?<=...)`, `(?<!...)`) – starší Safari na iOS kvůli němu neparsuje celý bundle.
