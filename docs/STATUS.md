@@ -1,6 +1,6 @@
 # Stav projektu – Dopisy naděje
 
-Aktualizováno: 2026-09-29 · Evaly: 18/18 bez OCR (`npm run eval -- --no-ocr`), OCR testy neběží
+Aktualizováno: 2026-09-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`), OCR testy neběží
 
 ## Hotovo
 - Profily vězňů (55, online 48), CZ/EN/RU UI, sbírka dopisů v localStorage, FAQ, návody k odeslání.
@@ -26,6 +26,7 @@ Aktualizováno: 2026-09-29 · Evaly: 18/18 bez OCR (`npm run eval -- --no-ocr`),
 - Ruské tvary trestů v datech: „4 лет“ → „4 года“ (2–4 года, 5+ лет).
 
 **Nízká**
+- `sW-long-input-kept` kolísá (~91 % běhů): občas „Jako knihovník bych se rád zeptal…“ navzdory zákazu.
 - OCR rukopisu Poljudové: few-shot příklady.
 - `netlify/edge-functions/claude.js` má nepoužívanou Gemini větev (obrázky jdou na Worker) – uklidit.
 - Evaly: každý případ běží 3×, modely kolísají; sledovat procenta v REPORT.md.
