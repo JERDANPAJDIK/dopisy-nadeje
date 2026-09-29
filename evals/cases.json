@@ -294,7 +294,7 @@
       "runs": 3,
       "lang": "cs",
       "input": "[jsem učitel a zajímám se o astronomii a právo]",
-      "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov).",
+      "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov). Since 2026-09-29 the card shows the prisoner description from P; reason is only a short shared attribute or empty.",
       "checks": [
         {
           "type": "json"
@@ -311,6 +311,16 @@
         },
         {
           "type": "picks_facts_from_P"
+        },
+        {
+          "type": "reasons_max_chars",
+          "max": 100
+        },
+        {
+          "type": "judge",
+          "on": "reasons",
+          "question": "These are short reasons shown next to recommended prisoners (an empty line means no reason). Does any non-empty reason claim something is shared with the user that the user did NOT write (e.g. a profession, age or interest the user never mentioned)?",
+          "expect": false
         }
       ]
     },
@@ -341,6 +351,16 @@
         },
         {
           "type": "picks_facts_from_P"
+        },
+        {
+          "type": "reasons_max_chars",
+          "max": 100
+        },
+        {
+          "type": "judge",
+          "on": "reasons",
+          "question": "These are short reasons shown next to recommended prisoners (an empty line means no reason). Does any non-empty reason claim something is shared with the user that the user did NOT write (e.g. a profession, age or interest the user never mentioned)?",
+          "expect": false
         }
       ]
     },

@@ -45,10 +45,11 @@ export const sO=(l)=>l==="ru"
 export const sM=(l,P)=>`You help match people with political prisoners to write letters to.
 Here is the database of prisoners (JSON): ${JSON.stringify(P.filter(p=>p.o).map(p=>({id:p.i,name:p.ne,age:p.a,prof:p.pe,interests:p.ie,case:p.de,sentence:p.se})))}
 Based on the user's description of themselves, recommend 3 prisoners who would be the best match.
-For each pick write a FACTUAL reason: 1-2 plain sentences stating who the prisoner is and what they were convicted for, taken strictly from the database. If the user and prisoner share a concrete attribute (same profession, similar age, same stated interest), you may state it plainly in one clause. FORBIDDEN: invented emotional resonance, flattery, or speculation about the user ("as an architect you surely know...", "as a believer you have a unique opportunity..."). Never attribute feelings, knowledge or experiences to the user. If nothing concrete is shared, just describe the prisoner — that is enough.
-Respond ONLY with valid JSON in this exact format, nothing else (no markdown, no preamble):
-{"intro":"short neutral opening sentence in ${l==="cs"?"Czech":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"1-2 factual sentences in ${l==="cs"?"Czech":"English"}"}]}
-The picks array must ALWAYS have exactly 3 items with 3 DIFFERENT prisoners — even if nothing in the user's description matches anyone. In that case simply pick 3 prisoners and describe them factually; never return fewer picks and never explain the lack of a match instead of picking.
+The app already shows each prisoner's own description, so do NOT describe the prisoner, their case or sentence.
+For each pick, "reason" is ONLY a short clause (max ~12 words) naming a CONCRETE attribute the prisoner shares with what the user explicitly wrote: same profession, similar age, or the same stated interest. Only name an attribute the user's text literally contains: if the user wrote "právo" and the prisoner lists Law, write "Také se zajímá o právo."; related but different topics (astronomy vs physics, law vs history) do NOT count. The attribute must ALSO appear in that prisoner's own record ("interests", "prof" or "age"). Name only that one shared attribute and never list the prisoner's other interests. Say "podobný věk" only if the ages differ by at most 5 years, and "stejný věk" only if they are equal. If nothing concrete is shared, use an empty string "". FORBIDDEN: invented emotional resonance, flattery, or speculation about the user ("as an architect you surely know...", "as a believer you have a unique opportunity..."). Never attribute feelings, knowledge or experiences to the user, and never add facts about the prisoner.
+OUTPUT FORMAT: if you want to double-check the picks, do it BEFORE the answer. Then put the final answer between <json> and </json> as valid JSON in exactly this format (no markdown):
+{"intro":"short neutral opening sentence in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"short shared attribute in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}, or empty string"}]}
+The picks array must ALWAYS have exactly 3 items with 3 DIFFERENT prisoners — even if nothing in the user's description matches anyone. In that case simply pick 3 prisoners with an empty reason; never return fewer picks and never explain the lack of a match instead of picking.
 Each "id" MUST be copied character for character from an "id" field in the database above (e.g. "yuri-dmitriev") — never a name, a transliteration or an invented id.`;
 
 // Dual gender forms like "chtěl/a", "poslal(a)", "написал(а)", "сам(-а)" — must never reach the user
@@ -59,10 +60,12 @@ export const sWFix=(letter)=>`The letter below contains dual gender forms with a
 
 ${letter}`;
 
-// The model returns the letter inside <letter></letter> (after any planning); take the last block
-export const extractLetter=(s)=>{
-  const all=[...(s||"").matchAll(/<letter>([\s\S]*?)<\/letter>/gi)];
+// The model puts its final answer inside <tag></tag> (after any planning); take the last block
+export const extractTag=(s,tag)=>{
+  s=s||"";
+  const all=[...s.matchAll(new RegExp("<"+tag+">([\\s\\S]*?)</"+tag+">","gi"))];
   if(all.length)return all[all.length-1][1].trim();
-  const i=(s||"").toLowerCase().lastIndexOf("<letter>"); // truncated output without closing tag
-  return i>-1?s.slice(i+8).trim():s;
+  const i=s.toLowerCase().lastIndexOf("<"+tag+">"); // truncated output without closing tag
+  return i>-1?s.slice(i+tag.length+2).trim():s;
 };
+export const extractLetter=(s)=>extractTag(s,"letter");

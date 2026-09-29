@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter } from "./prompts.js";
+import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
@@ -372,7 +372,7 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
     try{
       const r=await ai(apiKey,sM(lang,P),about);
       // Strip markdown fences if present
-      const cleaned=r.replace(/```json|```/g,"").trim();
+      const cleaned=extractTag(r,"json").replace(/```json|```/g,"").trim();
       try{
         const parsed=JSON.parse(cleaned);
         // Validate
@@ -383,7 +383,7 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
           // Top up to 3 if the model returned fewer valid picks (unknown ids, duplicates)
           if(parsed.picks.length<3){
             const rest=P.filter(p=>p.o&&!seen.has(p.i)).sort(()=>Math.random()-.5);
-            for(const pr of rest.slice(0,3-parsed.picks.length)){const s=(t(pr.d,pr.de,pr.dr||pr.de)||"").split(". ")[0];parsed.picks.push({id:pr.i,prisoner:pr,reason:s&&!s.endsWith(".")?s+".":s});}
+            for(const pr of rest.slice(0,3-parsed.picks.length))parsed.picks.push({id:pr.i,prisoner:pr,reason:""});
           }
           setResult(parsed);
         }else{
@@ -422,7 +422,8 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
                   <div className="text-[11px] text-stone-400 flex-shrink-0" style={{fontFamily:"system-ui"}}>{p.prisoner.a} {t("let","yo","лет")} · {cs?p.prisoner.p:p.prisoner.pe}</div>
                 </div>
                 <div className="text-xs text-red-700 font-medium mb-2" style={{fontFamily:"system-ui"}}>{cs?p.prisoner.s:p.prisoner.se}</div>
-                <p className="text-sm text-stone-600 leading-relaxed">{p.reason}</p>
+                <p className="text-sm text-stone-600 leading-relaxed">{t(p.prisoner.d,p.prisoner.de,p.prisoner.dr||p.prisoner.de)}</p>
+                {p.reason&&<p className="text-xs text-stone-500 mt-1.5" style={{fontFamily:"system-ui"}}>✓ {p.reason}</p>}
                 <div className="flex items-center gap-1 mt-2 text-red-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{fontFamily:"system-ui"}}>{t("Napsat tomuto člověku","Write to this person","Написать этому человеку")} →</div>
               </div>
             </div>

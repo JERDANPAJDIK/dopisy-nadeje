@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter } from "../src/prompts.js";
+import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "../src/prompts.js";
 import { runStreamParserTest } from "./stream-parser.mjs";
 
 const EVALS = path.dirname(fileURLToPath(import.meta.url));
@@ -128,7 +128,7 @@ async function produce(c) {
     }
     case "sC": return claude(sC(l), input);
     case "sT": return claude(sT, input);
-    case "sM": return claude(sM(l, P), input);
+    case "sM": return extractTag(await claude(sM(l, P), input), "json"); // same as Match in App.jsx
     case "sO": {
       const images = c.pdf_file ? await pdfToJpegs(path.join(EVALS, c.pdf_file)) : await imageToJpeg(path.join(EVALS, c.image_file));
       return gemini(sO(l), t(l, "Rozpoznej a přelož tento dopis.", "Recognize and translate.", "Распознай текст на изображении. Выведи только распознанный текст."), images);
@@ -216,6 +216,10 @@ async function check(ch, out, input) {
     case "picks_unique": {
       const ids = parseJson(out).picks.map(p => p.id);
       return new Set(ids).size === ids.length ? { pass: true } : { pass: false, reason: "duplicate ids: " + ids.join(", ") };
+    }
+    case "reasons_max_chars": {
+      const long = parseJson(out).picks.map(p => p.reason || "").filter(r => r.length > ch.max);
+      return !long.length ? { pass: true } : { pass: false, reason: `reason longer than ${ch.max} chars`, excerpt: long[0] };
     }
     case "picks_ids_in_P": {
       const bad = parseJson(out).picks.map(p => p.id).filter(id => !P.some(p => p.i === id));
