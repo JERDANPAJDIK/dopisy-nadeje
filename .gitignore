@@ -5,3 +5,5 @@ dist
 .DS_Store
 .netlify
 *.log
+evals/fixtures/
+evals/results/
