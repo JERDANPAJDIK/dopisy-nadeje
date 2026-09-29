@@ -187,7 +187,7 @@ async function check(ch, out, input) {
     }
     case "clean_letter": {
       // No leftover tags, separator lines, or think-aloud self-corrections in the shown letter
-      const m = /<\/?letter|^\s*[-–—*_]{3,}\s*$|\(\s*(opravuji|let me|исправляюсь)|\s[–—]\s*ne,/im.exec(out);
+      const m = /<\/?[a-z]+>|^\s*[-–—*_]{3,}\s*$|\(\s*(opravuji|let me|исправляюсь)|\s[–—]\s*ne,/im.exec(out);
       return !m ? { pass: true } : { pass: false, reason: `think-aloud artifact "${m[0].trim()}"`, excerpt: excerpt(out, m.index) };
     }
     case "no_dual_forms": {

@@ -262,7 +262,7 @@
       "lang": "cs",
       "recipient": "yuri-dmitriev",
       "input": "Jmenuji se Tomáš, je mi 45 let a pracuji jako knihovník v Olomouci. Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou. Moc mě mrzí, čemu musíte čelit. Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi. Přeji vám hodně sil a trpělivosti.",
-      "note": "Sasha: the AI ignored her sentences (regret, question about TV).",
+      "note": "Sasha: the AI ignored her sentences (regret, question about TV) and invented details (profession-based knowledge).",
       "checks": [
         {
           "type": "clean_letter"
@@ -275,6 +275,11 @@
             "Moc mě mrzí, čemu musíte čelit.",
             "Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi."
           ]
+        },
+        {
+          "type": "judge",
+          "question": "Compare the letter with what the user wrote (CONTEXT). Does the letter add any opinion, knowledge, experience or biographical fact about the SENDER that the user did not write (e.g. 'Jako knihovník dobře vím, jak důležité jsou knihy', a hobby, a place, a memory)? Rephrasing the user's own sentences and warm wishes do not count.",
+          "expect": false
         }
       ]
     },

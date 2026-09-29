@@ -7,7 +7,8 @@ TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT — a few sentences.":""} $
 
 FACTUAL RULES — the most important part of your job:
 1. Use ONLY facts the user actually wrote about themselves. NEVER invent a name, age, city, profession, hobbies, memories, anecdotes or any biographical detail. Inventing facts about the sender is the worst possible error — the sender would be lying to a prisoner.
-2. If the user wrote specific sentences, wishes or a paragraph, USE them — their text is the core of the letter, you only polish and connect it.
+2. If the user wrote specific sentences, wishes or a paragraph, USE them — their text is the core of the letter, you only polish and connect it. Keep EVERY sentence and every question the user wrote, close to their own wording. A brief expression of sympathy such as "Moc mě mrzí, čemu musíte čelit" is NOT commentary on the case and must be kept.
+2b. When the user wrote their own sentences, every sentence of the letter must be one of: (a) one of the user's sentences, polished; (b) a greeting or closing; (c) a short wish for the recipient (strength, health, patience); (d) at most one short neutral connecting sentence such as "Píšu Vám, protože na Vás myslím." Nothing else — no opinions, knowledge or experiences the user did not write, even ones that seem to follow from their profession or hobbies (the user's profession is mentioned once, as they wrote it; never write a phrase like "Jako knihovník…" / "As a teacher…" or otherwise link the profession to the user's feelings or questions), and no descriptions expanding what the user said. Do not praise or evaluate the recipient's work or case.
 3. If the user provided little information, you MAY build the letter around the RECIPIENT's interests shown above (e.g. wish them strength in what they love). But keep it about the recipient — do NOT put words, opinions, claimed shared hobbies or invented conversation in the sender's mouth. Write "I know you're interested in X — I hope you can still enjoy it" (about them), NOT "I've always loved X too" or "I often think X is wonderful" (invented sender feelings). Do not claim the sender heard about them, shares their hobby, or has any opinion the user did not state.
 4. If the user provided little information, write a SHORT letter. A short sincere letter is better than a long invented one. Do not pad with generic scenery, weather, café or city descriptions the user did not mention.
 5. If the user did not introduce themselves by name, do not sign any name — end with a warm neutral closing instead.
@@ -20,7 +21,7 @@ NEVER write dual endings with a slash or brackets (e.g. "chtěl/a", "popřál/a"
 CENSORSHIP RULES (letter is read by prison censor):
 NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
 Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. No headers or labels.
-OUTPUT FORMAT: if you need to plan or reconsider wording (e.g. which gender-neutral phrasing to use), do it BEFORE the letter. Then put the single finished letter between <letter> and </letter>. Only the text inside the last <letter> block is shown to the user, so it must contain no corrections, drafts, notes like "(let me correct that)" or separator lines — just the letter, ready to copy.`;
+OUTPUT FORMAT: first write a short <plan></plan>: list the user's sentences and questions you will keep, and any sentence you are adding with its category from rule 2b (b, c or d); drop anything that fits no category. Decide gender-neutral phrasing there too if needed. Then put the single finished letter between <letter> and </letter>. Only the text inside the last <letter> block is shown to the user, so it must contain no corrections, drafts, notes like "(let me correct that)" or separator lines — just the letter, ready to copy.`;
 
 export const sC=(l)=>`Check a letter to a Russian political prisoner against prison censor rules.
 
@@ -61,11 +62,13 @@ export const sWFix=(letter)=>`The letter below contains dual gender forms with a
 ${letter}`;
 
 // The model puts its final answer inside <tag></tag> (after any planning); take the last block
+// (last opening tag before the last closing tag; also handles a missing closing tag)
 export const extractTag=(s,tag)=>{
-  s=s||"";
-  const all=[...s.matchAll(new RegExp("<"+tag+">([\\s\\S]*?)</"+tag+">","gi"))];
-  if(all.length)return all[all.length-1][1].trim();
-  const i=s.toLowerCase().lastIndexOf("<"+tag+">"); // truncated output without closing tag
-  return i>-1?s.slice(i+tag.length+2).trim():s;
+  s=s||"";const low=s.toLowerCase(),open="<"+tag+">",close="</"+tag+">";
+  const end=low.lastIndexOf(close);
+  const start=end>-1?low.lastIndexOf(open,end):low.lastIndexOf(open);
+  if(start<0)return s;
+  // drop stray tags the model sometimes leaves (e.g. a misspelled closing tag)
+  return s.slice(start+open.length,end>start?end:undefined).replace(/<\/?[a-z]+>/gi,"").trim();
 };
 export const extractLetter=(s)=>extractTag(s,"letter");
