@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "id": "sM-three-valid-picks",
+      "prompt": "sM",
+      "lang": "cs",
+      "input": "[jsem učitel a zajímám se o astronomii a právo]",
+      "checks": [
+        { "type": "json" },
+        { "type": "picks_count", "equals": 3 },
+        { "type": "picks_unique" },
+        { "type": "picks_ids_in_P" },
+        { "type": "picks_facts_from_P" }
+      ],
+      "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov)."
+    }
+  ]
+}

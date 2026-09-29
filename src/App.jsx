@@ -378,7 +378,13 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
         // Validate
         if(parsed.picks&&Array.isArray(parsed.picks)){
           // Match IDs to actual prisoners
-          parsed.picks=parsed.picks.map(p=>({...p,prisoner:P.find(pr=>pr.i===p.id)})).filter(p=>p.prisoner);
+          const seen=new Set();
+          parsed.picks=parsed.picks.map(p=>({...p,prisoner:P.find(pr=>pr.i===p.id)})).filter(p=>p.prisoner&&!seen.has(p.id)&&seen.add(p.id));
+          // Top up to 3 if the model returned fewer valid picks (unknown ids, duplicates)
+          if(parsed.picks.length<3){
+            const rest=P.filter(p=>p.o&&!seen.has(p.i)).sort(()=>Math.random()-.5);
+            for(const pr of rest.slice(0,3-parsed.picks.length)){const s=(t(pr.d,pr.de,pr.dr||pr.de)||"").split(". ")[0];parsed.picks.push({id:pr.i,prisoner:pr,reason:s&&!s.endsWith(".")?s+".":s});}
+          }
           setResult(parsed);
         }else{
           setResult({intro:"",picks:[],raw:r});
