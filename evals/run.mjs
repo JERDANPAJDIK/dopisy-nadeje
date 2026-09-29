@@ -1,4 +1,4 @@
-// Prompt evals: npm run eval [-- <id-filter>]
+// Prompt evals: npm run eval [-- <id-filter>] [--no-ocr] [--runs N]
 // Calls the APIs directly with the same model/params as netlify/edge-functions/claude.js
 // (Claude) and workers/ocr/worker.js (Gemini). Keys from .env.local.
 // Writes evals/results/REPORT.md and raw outputs to evals/results/outputs/.
@@ -216,23 +216,34 @@ async function check(ch, out, input) {
   }
 }
 
-async function runCase(c) {
-  const miss = missingFixture(c);
-  if (miss) return { c, status: "SKIP", reason: `missing fixture ${miss}` };
+async function runOnce(c, k) {
   let out = "";
   try {
     if (c.prompt !== "local") out = await produce(c);
   } catch (e) {
-    return { c, status: "ERROR", reason: e.message };
+    return { status: "ERROR", reason: e.message };
   }
-  if (c.prompt !== "local") fs.writeFileSync(path.join(RESULTS, "outputs", c.id + ".txt"), out);
+  if (c.prompt !== "local") fs.writeFileSync(path.join(RESULTS, "outputs", c.id + (k > 1 ? ".run" + k : "") + ".txt"), out);
   const fails = [];
   for (const ch of c.checks) {
     let r;
     try { r = await check(ch, out, inputOf(c)); } catch (e) { r = { pass: false, reason: `check error: ${e.message}` }; }
     if (!r.pass) fails.push({ check: ch.type, reason: r.reason, excerpt: r.excerpt || r.quote || "" });
   }
-  return { c, status: fails.length ? "FAIL" : "PASS", fails, chars: out.length };
+  return { status: fails.length ? "FAIL" : "PASS", fails };
+}
+
+// Flaky cases set "runs" in cases.json; the case passes only if every run passes
+async function runCase(c) {
+  const miss = missingFixture(c);
+  if (miss) return { c, status: "SKIP", reason: `missing fixture ${miss}` };
+  const n = RUNS_OVERRIDE || c.runs || 1;
+  const runs = [];
+  for (let k = 1; k <= n; k++) runs.push(await runOnce(c, k));
+  const passed = runs.filter(r => r.status === "PASS").length;
+  const status = passed === n ? "PASS" : runs.every(r => r.status === "ERROR") ? "ERROR" : "FAIL";
+  const bad = runs.map((r, i) => ({ ...r, run: i + 1 })).filter(r => r.status !== "PASS");
+  return { c, status, passed, n, reason: bad.find(r => r.reason)?.reason, fails: bad.flatMap(r => (r.fails || []).map(f => ({ ...f, run: r.run }))) };
 }
 
 async function pool(items, n, fn) {
@@ -247,14 +258,15 @@ function report(results, ms) {
   L.push(`# Eval report`, ``, `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC · ${(ms / 1000).toFixed(0)} s · Claude \`${CLAUDE_MODEL}\`, Gemini \`${GEMINI_MODEL}\`, judge \`${JUDGE_MODEL}\``, ``);
   L.push(`**${count("PASS")} passed · ${count("FAIL")} failed · ${count("ERROR")} errors · ${count("SKIP")} skipped** (of ${results.length})`, ``);
   L.push(`| Case | Result |`, `|---|---|`);
-  for (const r of results) L.push(`| ${r.c.id} | ${r.status === "PASS" ? "✅ PASS" : r.status === "SKIP" ? "⏭ SKIP" : "❌ " + r.status} |`);
+  const rate = r => r.n > 1 ? ` ${r.passed}/${r.n} (${Math.round(100 * r.passed / r.n)} %)` : "";
+  for (const r of results) L.push(`| ${r.c.id} | ${r.status === "PASS" ? "✅ PASS" : r.status === "SKIP" ? "⏭ SKIP" : "❌ " + r.status}${rate(r)} |`);
   const bad = results.filter(r => r.status !== "PASS");
   if (bad.length) {
     L.push(``, `## Failures`);
     for (const r of bad) {
       L.push(``, `### ${r.c.id} — ${r.status}`);
       if (r.reason) L.push(`- ${r.reason}`);
-      for (const f of r.fails || []) L.push(`- **${f.check}**: ${f.reason}` + (f.excerpt ? `\n  > ${f.excerpt.slice(0, 200)}` : ""));
+      for (const f of r.fails || []) L.push(`- ${r.n > 1 ? "run " + f.run + " · " : ""}**${f.check}**: ${f.reason}` + (f.excerpt ? `\n  > ${f.excerpt.slice(0, 200)}` : ""));
     }
   }
   L.push(``, `Raw outputs: \`evals/results/outputs/<case>.txt\``);
@@ -263,15 +275,20 @@ function report(results, ms) {
 
 // ---------- main ----------
 loadEnv();
-for (const k of ["ANTHROPIC_API_KEY", "GEMINI_API_KEY"]) if (!process.env[k]) { console.error(`Missing ${k} in .env.local`); process.exit(2); }
+for (const k of ["ANTHROPIC_API_KEY", "GEMINI_API_KEY"]) if (!process.env[k] && !(k === "GEMINI_API_KEY" && process.argv.includes("--no-ocr"))) { console.error(`Missing ${k} in .env.local`); process.exit(2); }
 fs.mkdirSync(path.join(RESULTS, "outputs"), { recursive: true });
 
-const filter = process.argv[2];
-const cases = JSON.parse(fs.readFileSync(path.join(EVALS, "cases.json"), "utf8")).cases.filter(c => !filter || c.id.includes(filter));
+// Args: [id-filter] [--no-ocr] [--runs N]
+const args = process.argv.slice(2);
+const NO_OCR = args.includes("--no-ocr");
+const RUNS_OVERRIDE = args.includes("--runs") ? +args[args.indexOf("--runs") + 1] : 0;
+const filter = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--runs");
+const cases = JSON.parse(fs.readFileSync(path.join(EVALS, "cases.json"), "utf8")).cases
+  .filter(c => (!filter || c.id.includes(filter)) && !(NO_OCR && c.prompt === "sO"));
 const t0 = Date.now();
 const results = await pool(cases, CONCURRENCY, async c => {
   const r = await runCase(c);
-  console.log(`${r.status.padEnd(5)} ${c.id}${r.status === "PASS" ? "" : "  — " + (r.reason || r.fails.map(f => f.check + ": " + f.reason).join(" | "))}`);
+  console.log(`${r.status.padEnd(5)} ${c.id}${r.n > 1 ? ` ${r.passed}/${r.n}` : ""}${r.status === "PASS" ? "" : "  — " + (r.reason || r.fails.map(f => f.check + ": " + f.reason).join(" | "))}`);
   return r;
 });
 fs.writeFileSync(path.join(RESULTS, "REPORT.md"), report(results, Date.now() - t0));

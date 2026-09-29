@@ -14,6 +14,7 @@
     {
       "id": "sC-majboroda-passes",
       "prompt": "sC",
+      "runs": 3,
       "lang": "cs",
       "input_file": "fixtures/letters/majboroda.txt",
       "note": "Real letter that passed censorship. Old output flagged a warm sentence saying the story touched the writer, plus a long table.",
@@ -35,6 +36,7 @@
     {
       "id": "sC-nadezhda-passes",
       "prompt": "sC",
+      "runs": 3,
       "lang": "cs",
       "input_file": "fixtures/letters/nadezhda.txt",
       "note": "Real letter that passed censorship. Old output flagged 'неравнодушны к происходящему вокруг'.",
@@ -56,6 +58,7 @@
     {
       "id": "sC-eduard-passes",
       "prompt": "sC",
+      "runs": 3,
       "lang": "cs",
       "input_file": "fixtures/letters/eduard.txt",
       "note": "Real letter sent via Vestochka that passed censorship. Old output flagged 3 places (anxiety, 'мужчину, которого сама выбрала', 'находясь в заключении').",
@@ -77,6 +80,7 @@
     {
       "id": "sC-natalja-postcard",
       "prompt": "sC",
+      "runs": 3,
       "lang": "cs",
       "input_file": "fixtures/letters/natalja-postcard.txt",
       "note": "Quick postcard. Flagging the sentence about what she was subjected to is acceptable; flagging the self-deprecating sentence or commenting on length is not.",
@@ -111,6 +115,7 @@
     {
       "id": "sW-minimal-input",
       "prompt": "sW",
+      "runs": 3,
       "lang": "cs",
       "recipient": "yevgenia-maiboroda",
       "input": "Jsem člověk.",
@@ -132,6 +137,7 @@
     {
       "id": "sW-health-only",
       "prompt": "sW",
+      "runs": 3,
       "lang": "cs",
       "recipient": "kirill-bunin",
       "input": "Chci popřát jen zdraví a nic víc.",
@@ -158,6 +164,7 @@
     {
       "id": "sW-female-sender",
       "prompt": "sW",
+      "runs": 3,
       "lang": "cs",
       "recipient": "yevgenia-maiboroda",
       "input": "Jmenuji se Jana, je mi 42 let a jsem učitelka z Brna. Dlouho jsem přemýšlela, co vám napsat. Ráda bych vám popřála hodně sil.",
@@ -178,6 +185,7 @@
     {
       "id": "sW-male-sender",
       "prompt": "sW",
+      "runs": 3,
       "lang": "cs",
       "recipient": "kirill-bunin",
       "input": "Jmenuji se Petr, je mi 50 let a jezdím s tramvají v Praze. Dlouho jsem přemýšlel, jestli vám mám napsat. Rád bych vám poslal pár slov povzbuzení.",
@@ -198,6 +206,7 @@
     {
       "id": "sW-long-input-kept",
       "prompt": "sW",
+      "runs": 3,
       "lang": "cs",
       "recipient": "yuri-dmitriev",
       "input": "Jmenuji se Tomáš, je mi 45 let a pracuji jako knihovník v Olomouci. Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou. Moc mě mrzí, čemu musíte čelit. Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi. Přeji vám hodně sil a trpělivosti.",
@@ -230,6 +239,7 @@
     {
       "id": "sM-three-valid-picks",
       "prompt": "sM",
+      "runs": 3,
       "lang": "cs",
       "input": "[jsem učitel a zajímám se o astronomii a právo]",
       "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov).",
@@ -255,6 +265,7 @@
     {
       "id": "sM-architect-no-projection",
       "prompt": "sM",
+      "runs": 3,
       "lang": "cs",
       "input": "Je mi 65 let, jsem architekt z Brna a dlouhodobě žiji ve Vídni. Chci podpořit někoho v mém věku, s kým mám něco společného.",
       "note": "Sasha: reasons like 'jako architekt z demokratické země víte...' are unwanted. Projection is checked by regex: claude-haiku-4-5 repeatedly judged plain age comparisons as projection.",
