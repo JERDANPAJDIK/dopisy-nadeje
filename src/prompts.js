@@ -1,6 +1,7 @@
 // System prompts for the AI calls in App.jsx (also used by evals/run.mjs).
 
-export const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
+// g = sender's gender chosen in the UI: "m", "f" or "" (not stated)
+export const sW=(l,p,lt,sm,g="")=>`You help write letters to political prisoners in Russia.
 RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
 TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT — a few sentences.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
 
@@ -13,7 +14,8 @@ FACTUAL RULES — the most important part of your job:
 6. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
 Length guide: output should be roughly proportional to the user's input, at most about double.
 
-GENDER: FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, fall back to gender-neutral phrasing: prefer present-tense or neutral constructions ("posílám Vám přání", "chci Vám popřát"; in Russian "я пишу", "я хочу пожелать", "шлю Вам"). In that fallback case NEVER write dual endings with a slash (e.g. "chtěl/a", "написал(а)") — that must never appear in the final letter.
+GENDER: ${g==="m"?`The sender is a MAN (chosen by the user). Use masculine forms for the sender consistently (e.g. "napsal jsem", "rád"; in Russian "я написал", "рад").`:g==="f"?`The sender is a WOMAN (chosen by the user). Use feminine forms for the sender consistently (e.g. "napsala jsem", "ráda"; in Russian "я написала", "рада").`:`FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, write the whole letter WITHOUT any gendered form for the sender: no past tense in first person ("napsal", "chtěl", "popřál"), never the word "abych" (it forces a gendered form: write "chci Vám popřát", not "abych Vám popřál"), no gendered adjectives ("rád", "vděčný"). Use present tense and neutral constructions instead ("píšu Vám", "posílám Vám pozdrav", "přeji Vám", "chci Vám popřát", "mám radost"; in Russian "я пишу", "хочу пожелать", "шлю Вам").`}
+NEVER write dual endings with a slash or brackets (e.g. "chtěl/a", "popřál/a", "написал(а)") — they must never appear in the letter.
 
 CENSORSHIP RULES (letter is read by prison censor):
 NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
@@ -47,3 +49,11 @@ Respond ONLY with valid JSON in this exact format, nothing else (no markdown, no
 {"intro":"short neutral opening sentence in ${l==="cs"?"Czech":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"1-2 factual sentences in ${l==="cs"?"Czech":"English"}"}]}
 The picks array must ALWAYS have exactly 3 items with 3 DIFFERENT prisoners — even if nothing in the user's description matches anyone. In that case simply pick 3 prisoners and describe them factually; never return fewer picks and never explain the lack of a match instead of picking.
 Each "id" MUST be copied character for character from an "id" field in the database above (e.g. "yuri-dmitriev") — never a name, a transliteration or an invented id.`;
+
+// Dual gender forms like "chtěl/a", "poslal(a)", "написал(а)", "сам(-а)" — must never reach the user
+export const DUAL_FORM_RE=/\p{L}\/(a|á|la|ka|y)(?![\p{L}])|\p{L}\(-?(a|á|la|ka|y|а|ла|на|ая)\)/u;
+
+// One-shot repair request when a generated letter still contains dual forms
+export const sWFix=(letter)=>`The letter below contains dual gender forms with a slash or brackets (e.g. "chtěl/a", "написал(а)"), which must never appear. Rewrite it so that it contains no such forms: use present tense and neutral constructions for the sender instead. Change nothing else. Output ONLY the corrected letter.
+
+${letter}`;

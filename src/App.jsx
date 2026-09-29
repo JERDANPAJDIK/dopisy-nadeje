@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { sW, sC, sT, sO, sM } from "./prompts.js";
+import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
@@ -438,6 +438,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [lt,setLt]=useState("letter");
   const [sm,setSm]=useState(pr.o?"online":"mail");
   const [mode,setMode]=useState("help");
+  const [g,setG]=useState("");
   const [about,setAbout]=useState("");
   const [text,setText]=useState("");
   const [loading,setLoading]=useState(false);
@@ -449,7 +450,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [saved,setSaved]=useState(false);
   const [showGuide,setShowGuide]=useState(false);
   const cp=t=>{try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch(e){}};
-  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const r=await ai(apiKey,sW(lang,pr,lt,sm),`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);setResult(cleanLetter(r));}catch(e){setErr(e.message);}finally{setLoading(false);}};
+  const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const sys=sW(lang,pr,lt,sm,g);const r=await ai(apiKey,sys,`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);let letter=cleanLetter(r);if(DUAL_FORM_RE.test(letter)){const fixed=cleanLetter(await ai(apiKey,sys,sWFix(letter)));if(fixed&&fixed!=="No response")letter=fixed;}setResult(letter);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Kontroluji...","Checking...","Проверяю..."));setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Překládám...","Translating...","Перевожу..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
@@ -506,6 +507,12 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
       </div>
       <p className="text-[11px] text-stone-400 mb-3">{mode==="help"?(t("Řekněte nám o sobě a AI vygeneruje návrh dopisu v češtině i ruštině.","Tell us about yourself and AI will draft a letter for you, then translate it to Russian.","Расскажите о себе, и ИИ составит черновик письма на русском языке.")):(t("Napište vlastní text. AI zkontroluje pravidla cenzury a přeloží do ruštiny.","Write your own text. AI will check censorship rules and translate to Russian.","Напишите текст на русском языке. ИИ проверит его на соответствие правилам тюремной цензуры."))}</p>
       {mode==="help"&&<>
+        <div className="flex items-center flex-wrap gap-1.5 mb-3" style={{fontFamily:"system-ui"}}>
+          <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mr-1">{t("Píšu jako","Writing as","Пишу как")}</span>
+          {[["m",t("muž","man","мужчина")],["f",t("žena","woman","женщина")],["",t("neuvádět","prefer not to say","не указывать")]].map(([k,l])=>
+            <button key={k||"none"} onClick={()=>setG(k)} className={`text-xs px-3 py-1 rounded-full border ${g===k?"bg-red-700 border-red-700 text-white":"bg-white border-stone-300 text-stone-600 hover:border-stone-400"}`}>{l}</button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-1.5 mb-2">{tips.map(t=><button key={t} onClick={()=>setAbout(a=>a?a+". "+t:t)} className="text-[11px] bg-stone-100 hover:bg-stone-200 text-stone-500 px-2 py-0.5 rounded-full" style={{fontFamily:"system-ui"}}>{t}</button>)}</div>
         <textarea value={about} onChange={e=>setAbout(e.target.value)} placeholder={t("Pár slov o sobě...","A few words about yourself...","Пару слов о себе...")} className="w-full border rounded p-3 text-sm min-h-[100px] resize-y outline-none focus:border-red-600 bg-stone-50"/>
         <div className="flex gap-2 mt-3"><button onClick={gen} disabled={loading||!about.trim()} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>✨ {t("Vygenerovat","Generate","Составить письмо")}</button></div>

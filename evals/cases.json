@@ -122,15 +122,15 @@
       "note": "Sasha: with one sentence the AI invented her name, city and profession.",
       "checks": [
         {
-          "type": "no_regex",
-          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b|\\((а|ла|на|ая)\\)",
-          "flags": "i",
-          "why": "slash/dual gender form"
+          "type": "no_dual_forms"
         },
         {
           "type": "judge",
-          "question": "The sender wrote only: 'Jsem člověk.' Does the letter invent any fact about the sender that the sender did not write: a name or signed name, a city or country, a profession, age, family, hobbies or personal memories? (Facts about the recipient and generic greetings or closings do not count.)",
+          "question": "The sender wrote only: 'Jsem člověk.' Does the letter state a concrete fact about the SENDER, such as their name, city, country, profession, age, a family member, a hobby or a personal memory? (Addressing the recipient by name and warm wishes do not count.)",
           "expect": false
+        },
+        {
+          "type": "no_gendered_sender_cs"
         }
       ]
     },
@@ -154,10 +154,10 @@
           "max": 600
         },
         {
-          "type": "no_regex",
-          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b|\\((а|ла|на|ая)\\)",
-          "flags": "i",
-          "why": "slash/dual gender form"
+          "type": "no_dual_forms"
+        },
+        {
+          "type": "no_gendered_sender_cs"
         }
       ]
     },
@@ -170,10 +170,7 @@
       "input": "Jmenuji se Jana, je mi 42 let a jsem učitelka z Brna. Dlouho jsem přemýšlela, co vám napsat. Ráda bych vám popřála hodně sil.",
       "checks": [
         {
-          "type": "no_regex",
-          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b",
-          "flags": "i",
-          "why": "slash gender form"
+          "type": "no_dual_forms"
         },
         {
           "type": "judge",
@@ -191,14 +188,51 @@
       "input": "Jmenuji se Petr, je mi 50 let a jezdím s tramvají v Praze. Dlouho jsem přemýšlel, jestli vám mám napsat. Rád bych vám poslal pár slov povzbuzení.",
       "checks": [
         {
-          "type": "no_regex",
-          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b",
-          "flags": "i",
-          "why": "slash gender form"
+          "type": "no_dual_forms"
         },
         {
           "type": "judge",
           "question": "The sender is a man (Petr). Does the letter ever refer to the sender with a FEMININE grammatical form (e.g. přemýšlela, ráda)?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sW-gender-switch-f",
+      "prompt": "sW",
+      "runs": 3,
+      "lang": "cs",
+      "recipient": "yevgenia-maiboroda",
+      "gender": "f",
+      "input": "Chci vám poslat pozdrav a popřát hodně sil.",
+      "note": "UI switch 'Píšu jako: žena', nothing gendered in the text.",
+      "checks": [
+        {
+          "type": "no_dual_forms"
+        },
+        {
+          "type": "judge",
+          "question": "The sender is a woman. Does the letter ever refer to the sender with a MASCULINE grammatical form (e.g. napsal, chtěl, rád)?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sW-gender-switch-m",
+      "prompt": "sW",
+      "runs": 3,
+      "lang": "cs",
+      "recipient": "kirill-bunin",
+      "gender": "m",
+      "input": "Chci vám poslat pozdrav a popřát hodně sil.",
+      "note": "UI switch 'Píšu jako: muž', nothing gendered in the text.",
+      "checks": [
+        {
+          "type": "no_dual_forms"
+        },
+        {
+          "type": "judge",
+          "question": "The sender is a man. Does the letter ever refer to the sender with a FEMININE grammatical form (e.g. napsala, chtěla, ráda)?",
           "expect": false
         }
       ]
@@ -229,10 +263,7 @@
       "input": "Dobrý den, posílám vám srdečný pozdrav z Prahy. Dlouho jsem přemýšlel/a, co vám napsat, a nakonec jsem se rozhodl/a napsat jen pár řádků. Přeji vám hodně zdraví a síly.",
       "checks": [
         {
-          "type": "no_regex",
-          "pattern": "\\((а|ла|на|ая)\\)|[а-яё]\\/(а|ла|на)\\b",
-          "flags": "i",
-          "why": "dual form like написал(а)"
+          "type": "no_dual_forms"
         }
       ]
     },
