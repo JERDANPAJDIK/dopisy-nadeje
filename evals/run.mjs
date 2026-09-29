@@ -185,6 +185,17 @@ async function check(ch, out, input) {
       const m = /(^|[^\p{L}])(abych|bych|rád|ráda|vděčný|vděčná|\p{L}+la? jsem|jsem \p{L}+la?)(?![\p{L}])/iu.exec(out);
       return !m ? { pass: true } : { pass: false, reason: `gendered sender form "${m[2]}"`, excerpt: excerpt(out, m.index) };
     }
+    case "sender_gender_cs": {
+      // Sender's gender from Czech verb/adjective forms; the user's own "jsem učitel(ka)" is ignored
+      const text = (ch.ignore || []).reduce((s, p) => s.split(p).join(" "), out);
+      const F = /(^|[^\p{L}])(ráda|vděčná|\p{L}{2,}la (jsem|bych)|(jsem|bych|abych) (vám )?\p{L}{2,}la)(?!\p{L})/iu;
+      const M = /(^|[^\p{L}])(rád|vděčný|\p{L}{2,}l (jsem|bych)|(jsem|bych|abych) (vám )?\p{L}{2,}l)(?!\p{L})/iu;
+      const [want, wrong] = ch.expect === "f" ? [F, M] : [M, F];
+      const bad = wrong.exec(text);
+      if (bad) return { pass: false, reason: `wrong-gender sender form "${bad[2]}"`, excerpt: excerpt(text, bad.index) };
+      if (want.test(text) || !ch.require_form) return { pass: true, note: want.test(text) ? "gendered" : "neutral" };
+      return { pass: false, reason: `no ${ch.expect === "f" ? "feminine" : "masculine"} sender form`, excerpt: excerpt(text) };
+    }
     case "clean_letter": {
       // No leftover tags, separator lines, or think-aloud self-corrections in the shown letter
       const m = /<\/?[a-z]+>|^\s*[-–—*_]{3,}\s*$|\(\s*(opravuji|let me|исправляюсь)|\s[–—]\s*ne,/im.exec(out);

@@ -256,6 +256,62 @@
       ]
     },
     {
+      "id": "sW-text-gender-f",
+      "prompt": "sW",
+      "runs": 3,
+      "lang": "cs",
+      "recipient": "yevgenia-maiboroda",
+      "gender": "",
+      "input": "Jsem učitelka a chci vám popřát hodně sil.",
+      "note": "Switch on neuvadet, gender only in the text: text gender must win over the neutral fallback.",
+      "checks": [
+        {
+          "type": "clean_letter"
+        },
+        {
+          "type": "no_dual_forms"
+        },
+        {
+          "type": "sender_gender_cs",
+          "expect": "f",
+          "ignore": [
+            "Jsem učitelka",
+            "jsem učitelka",
+            "Jsem učitel",
+            "jsem učitel"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sW-text-gender-m",
+      "prompt": "sW",
+      "runs": 3,
+      "lang": "cs",
+      "recipient": "kirill-bunin",
+      "gender": "",
+      "input": "Jsem učitel a chci vám popřát hodně sil.",
+      "note": "Switch on neuvadet, gender only in the text: text gender must win over the neutral fallback.",
+      "checks": [
+        {
+          "type": "clean_letter"
+        },
+        {
+          "type": "no_dual_forms"
+        },
+        {
+          "type": "sender_gender_cs",
+          "expect": "m",
+          "ignore": [
+            "Jsem učitelka",
+            "jsem učitelka",
+            "Jsem učitel",
+            "jsem učitel"
+          ]
+        }
+      ]
+    },
+    {
       "id": "sW-long-input-kept",
       "prompt": "sW",
       "runs": 3,
