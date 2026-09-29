@@ -1,18 +1,323 @@
 {
+  "_doc": "Eval cases for evals/run.mjs. input_file/image_file/pdf_file are relative to evals/ and live in evals/fixtures/ (gitignored, no personal texts in git). Inline inputs are synthetic. Judge checks ask a yes/no question; expect is the answer that passes.",
   "cases": [
+    {
+      "id": "stream-parser",
+      "prompt": "local",
+      "note": "ai() in App.jsx must reassemble SSE lines split across network chunks (no API call).",
+      "checks": [
+        {
+          "type": "stream_parser"
+        }
+      ]
+    },
+    {
+      "id": "sC-majboroda-passes",
+      "prompt": "sC",
+      "lang": "cs",
+      "input_file": "fixtures/letters/majboroda.txt",
+      "note": "Real letter that passed censorship. Old output flagged a warm sentence saying the story touched the writer, plus a long table.",
+      "checks": [
+        {
+          "type": "no_table"
+        },
+        {
+          "type": "max_sentences",
+          "max": 3
+        },
+        {
+          "type": "judge",
+          "question": "Does the response flag any sentence of the letter as a problem or suggest changing anything?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sC-nadezhda-passes",
+      "prompt": "sC",
+      "lang": "cs",
+      "input_file": "fixtures/letters/nadezhda.txt",
+      "note": "Real letter that passed censorship. Old output flagged 'неравнодушны к происходящему вокруг'.",
+      "checks": [
+        {
+          "type": "no_table"
+        },
+        {
+          "type": "max_sentences",
+          "max": 3
+        },
+        {
+          "type": "judge",
+          "question": "Does the response flag any sentence of the letter as a problem or suggest changing anything?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sC-eduard-passes",
+      "prompt": "sC",
+      "lang": "cs",
+      "input_file": "fixtures/letters/eduard.txt",
+      "note": "Real letter sent via Vestochka that passed censorship. Old output flagged 3 places (anxiety, 'мужчину, которого сама выбрала', 'находясь в заключении').",
+      "checks": [
+        {
+          "type": "no_table"
+        },
+        {
+          "type": "max_sentences",
+          "max": 3
+        },
+        {
+          "type": "judge",
+          "question": "Does the response flag any sentence of the letter as a problem or suggest changing anything?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sC-natalja-postcard",
+      "prompt": "sC",
+      "lang": "cs",
+      "input_file": "fixtures/letters/natalja-postcard.txt",
+      "note": "Quick postcard. Flagging the sentence about what she was subjected to is acceptable; flagging the self-deprecating sentence or commenting on length is not.",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "d[eé]lk|znak[uůy]|kr[aá]tk|dlouh",
+          "flags": "i",
+          "why": "comments on length"
+        },
+        {
+          "type": "judge",
+          "question": "The letter contains a self-deprecating sentence in which the writer says it sounds silly and that she is ashamed to write such a thing. Does the response flag, criticise or suggest changing THAT sentence, or criticise the writer for sounding unsure or self-deprecating? (Flagging other sentences does not count.)",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sC-politics-control",
+      "prompt": "sC",
+      "lang": "cs",
+      "input": "Здравствуйте, Андрей! Пишу вам из Праги. Эта преступная война против Украины должна закончиться, и Путин ответит за всё. Суд над вами был позорным спектаклем, приговор абсолютно незаконный. Держитесь, скоро этот режим падёт!",
+      "note": "Control sample: explicit war/Ukraine/criticism of state and court. MUST be flagged.",
+      "checks": [
+        {
+          "type": "judge",
+          "question": "Does the response flag at least one problem related to politics, the war, Ukraine or criticism of the court or the state?",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "sW-minimal-input",
+      "prompt": "sW",
+      "lang": "cs",
+      "recipient": "yevgenia-maiboroda",
+      "input": "Jsem člověk.",
+      "note": "Sasha: with one sentence the AI invented her name, city and profession.",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b|\\((а|ла|на|ая)\\)",
+          "flags": "i",
+          "why": "slash/dual gender form"
+        },
+        {
+          "type": "judge",
+          "question": "The sender wrote only: 'Jsem člověk.' Does the letter invent any fact about the sender that the sender did not write: a name or signed name, a city or country, a profession, age, family, hobbies or personal memories? (Facts about the recipient and generic greetings or closings do not count.)",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sW-health-only",
+      "prompt": "sW",
+      "lang": "cs",
+      "recipient": "kirill-bunin",
+      "input": "Chci popřát jen zdraví a nic víc.",
+      "note": "Sasha: AI wrote a long invented letter and did not wish health at all.",
+      "checks": [
+        {
+          "type": "regex",
+          "pattern": "zdrav",
+          "flags": "i",
+          "why": "must wish health"
+        },
+        {
+          "type": "max_chars",
+          "max": 600
+        },
+        {
+          "type": "no_regex",
+          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b|\\((а|ла|на|ая)\\)",
+          "flags": "i",
+          "why": "slash/dual gender form"
+        }
+      ]
+    },
+    {
+      "id": "sW-female-sender",
+      "prompt": "sW",
+      "lang": "cs",
+      "recipient": "yevgenia-maiboroda",
+      "input": "Jmenuji se Jana, je mi 42 let a jsem učitelka z Brna. Dlouho jsem přemýšlela, co vám napsat. Ráda bych vám popřála hodně sil.",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b",
+          "flags": "i",
+          "why": "slash gender form"
+        },
+        {
+          "type": "judge",
+          "question": "The sender is a woman (Jana, učitelka). Does the letter ever refer to the sender with a MASCULINE grammatical form (e.g. přemýšlel, rád, učitel)?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sW-male-sender",
+      "prompt": "sW",
+      "lang": "cs",
+      "recipient": "kirill-bunin",
+      "input": "Jmenuji se Petr, je mi 50 let a jezdím s tramvají v Praze. Dlouho jsem přemýšlel, jestli vám mám napsat. Rád bych vám poslal pár slov povzbuzení.",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "[a-zá-ž]\\/(a|á|la|ka|y)\\b",
+          "flags": "i",
+          "why": "slash gender form"
+        },
+        {
+          "type": "judge",
+          "question": "The sender is a man (Petr). Does the letter ever refer to the sender with a FEMININE grammatical form (e.g. přemýšlela, ráda)?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sW-long-input-kept",
+      "prompt": "sW",
+      "lang": "cs",
+      "recipient": "yuri-dmitriev",
+      "input": "Jmenuji se Tomáš, je mi 45 let a pracuji jako knihovník v Olomouci. Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou. Moc mě mrzí, čemu musíte čelit. Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi. Přeji vám hodně sil a trpělivosti.",
+      "note": "Sasha: the AI ignored her sentences (regret, question about TV).",
+      "checks": [
+        {
+          "type": "sentences_present",
+          "min_overlap": 0.6,
+          "sentences": [
+            "Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou.",
+            "Moc mě mrzí, čemu musíte čelit.",
+            "Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sT-no-dual-forms",
+      "prompt": "sT",
+      "input": "Dobrý den, posílám vám srdečný pozdrav z Prahy. Dlouho jsem přemýšlel/a, co vám napsat, a nakonec jsem se rozhodl/a napsat jen pár řádků. Přeji vám hodně zdraví a síly.",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "\\((а|ла|на|ая)\\)|[а-яё]\\/(а|ла|на)\\b",
+          "flags": "i",
+          "why": "dual form like написал(а)"
+        }
+      ]
+    },
     {
       "id": "sM-three-valid-picks",
       "prompt": "sM",
       "lang": "cs",
       "input": "[jsem učitel a zajímám se o astronomii a právo]",
+      "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov).",
       "checks": [
-        { "type": "json" },
-        { "type": "picks_count", "equals": 3 },
-        { "type": "picks_unique" },
-        { "type": "picks_ids_in_P" },
-        { "type": "picks_facts_from_P" }
-      ],
-      "note": "Live bug 2026-09-29: returned only 1 recipient. picks_facts_from_P: reasons must not add facts missing from the prisoner's record (seen: 'Jako právník...' for Gorinov)."
+        {
+          "type": "json"
+        },
+        {
+          "type": "picks_count",
+          "equals": 3
+        },
+        {
+          "type": "picks_unique"
+        },
+        {
+          "type": "picks_ids_in_P"
+        },
+        {
+          "type": "picks_facts_from_P"
+        }
+      ]
+    },
+    {
+      "id": "sM-architect-no-projection",
+      "prompt": "sM",
+      "lang": "cs",
+      "input": "Je mi 65 let, jsem architekt z Brna a dlouhodobě žiji ve Vídni. Chci podpořit někoho v mém věku, s kým mám něco společného.",
+      "note": "Sasha: reasons like 'jako architekt z demokratické země víte...' are unwanted. Projection is checked by regex: claude-haiku-4-5 repeatedly judged plain age comparisons as projection.",
+      "checks": [
+        {
+          "type": "json"
+        },
+        {
+          "type": "picks_count",
+          "equals": 3
+        },
+        {
+          "type": "picks_ids_in_P"
+        },
+        {
+          "type": "no_regex",
+          "on": "reasons",
+          "pattern": "jako (architekt|věřící|senior|člověk)|\bvíte\b|\bjistě\b|chápete|pochopíte|oceníte|jedinečn|najdete|budete mít|máte (blízko|co)",
+          "flags": "i",
+          "why": "attributes feelings/knowledge to the user"
+        },
+        {
+          "type": "picks_facts_from_P"
+        }
+      ]
+    },
+    {
+      "id": "sO-goncarova-image",
+      "prompt": "sO",
+      "lang": "cs",
+      "image_file": "fixtures/odpoved Goncarova.png",
+      "checks": [
+        {
+          "type": "regex",
+          "pattern": "Адела",
+          "why": "must read the name Адела"
+        },
+        {
+          "type": "regex",
+          "pattern": "Рождеств",
+          "why": "must read Рождеством"
+        }
+      ]
+    },
+    {
+      "id": "sO-goncarova-pdf",
+      "prompt": "sO",
+      "lang": "cs",
+      "pdf_file": "fixtures/goncarova_pdf.pdf",
+      "note": "PDF rendered to images like pdfToImages() in App.jsx. Earlier the model hallucinated a different letter (parents, son).",
+      "checks": [
+        {
+          "type": "no_regex",
+          "pattern": "родител|сын",
+          "flags": "i",
+          "why": "hallucinated letter"
+        },
+        {
+          "type": "regex",
+          "pattern": "Адела|nepodařilo přečíst",
+          "why": "must contain Адела or the unreadable notice"
+        }
+      ]
     }
   ]
 }

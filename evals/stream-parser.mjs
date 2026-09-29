@@ -18,19 +18,15 @@ export async function runStreamParserTest(runs = 200) {
   ).join("") + 'event: message_stop\ndata: {"type":"message_stop"}\n\n';
   const bytes = new TextEncoder().encode(sse);
 
-  const realFetch = globalThis.fetch;
   let pass = 0, sample = "";
-  try {
-    for (let k = 0; k < runs; k++) {
-      const chunks = [];
-      for (let i = 0; i < bytes.length;) { const n = 1 + Math.floor(Math.random() * 7); chunks.push(bytes.slice(i, i + n)); i += n; }
-      globalThis.fetch = async () => ({ ok: true, body: { getReader: () => { let i = 0; return { read: async () => i < chunks.length ? { done: false, value: chunks[i++] } : { done: true } }; } } });
-      const ai = new Function(code + ";return ai;")();
-      const out = await ai("key", "sys", "msg");
-      if (out === text) pass++; else if (!sample) sample = out.slice(0, 120);
-    }
-  } finally {
-    globalThis.fetch = realFetch;
+  for (let k = 0; k < runs; k++) {
+    const chunks = [];
+    for (let i = 0; i < bytes.length;) { const n = 1 + Math.floor(Math.random() * 7); chunks.push(bytes.slice(i, i + n)); i += n; }
+    // Mock fetch is passed as a parameter that shadows the global inside ai() only
+    const mockFetch = async () => ({ ok: true, body: { getReader: () => { let i = 0; return { read: async () => i < chunks.length ? { done: false, value: chunks[i++] } : { done: true } }; } } });
+    const ai = new Function("fetch", code + ";return ai;")(mockFetch);
+    const out = await ai("key", "sys", "msg");
+    if (out === text) pass++; else if (!sample) sample = out.slice(0, 120);
   }
   return pass === runs
     ? { pass: true, reason: `exact text in ${pass}/${runs} runs` }
