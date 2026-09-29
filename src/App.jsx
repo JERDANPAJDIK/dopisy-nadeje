@@ -387,15 +387,15 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
           }
           setResult(parsed);
         }else{
-          setResult({intro:"",picks:[],raw:r});
+          setResult({picks:[],raw:r});
         }
       }catch(e){
-        setResult({intro:"",picks:[],raw:r});
+        setResult({picks:[],raw:r});
       }
     }catch(e){setErr(e.message);}
     finally{setLoading(false);}
   };
-  const chips=cs?["Jsem učitel/ka, zajímá mě vzdělávání","Mám rád/a přírodu a knihy","Jsem student/ka, píšu poprvé","Zajímám se o IT a technologie","Jsem důchodce/důchodkyně","Zajímám se o umění a kulturu","Mám rád/a sport"]:["I'm a teacher interested in education","I love nature and books","I'm a student, writing for first time","I'm into IT and technology","I'm retired","I love art and culture","I enjoy sports"];
+  const chips=[t("Učím a zajímám se o vzdělávání","I teach and I'm interested in education","Я преподаю и интересуюсь образованием"),t("Čtu knihy a chodím do přírody","I read books and enjoy nature","Читаю книги и люблю бывать на природе"),t("Studuji a píšu poprvé","I'm a student, writing for the first time","Я учусь и пишу впервые"),t("Zajímám se o IT a technologie","I'm into IT and technology","Интересуюсь IT и технологиями"),t("Jsem v důchodu","I'm retired","Я на пенсии"),t("Zajímám se o umění a kulturu","I'm interested in art and culture","Интересуюсь искусством и культурой"),t("Sportuji","I do sports","Занимаюсь спортом")];
   return(<div className="max-w-2xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-2" style={{fontFamily:"system-ui"}}>✨ {t("Najdi mi adresáta","Help me find a recipient","Подобрать адресата")}</h2>
@@ -410,7 +410,7 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
     {err&&<div className="bg-red-50 border border-red-200 text-red-800 rounded p-3 mt-3 text-sm">⚠ {err}</div>}
     {result&&<div className="mt-4">
       <h3 className="font-bold mb-2 text-stone-700" style={{fontFamily:"system-ui"}}>✨ {t("Doporučení pro vás","Recommendations for you","Рекомендации для вас")}</h3>
-      {result.intro&&<p className="text-stone-600 text-sm mb-4 leading-relaxed">{result.intro}</p>}
+      {result.picks&&result.picks.length>0&&<p className="text-stone-600 text-sm mb-4 leading-relaxed">{t("Na základě toho, co jste o sobě napsali, doporučujeme tyto tři lidi.","Based on what you wrote about yourself, we recommend these three people.","На основе того, что вы о себе написали, мы рекомендуем этих трёх людей.")}</p>}
       {result.picks&&result.picks.length>0?<div className="space-y-3">
         {result.picks.map((p,i)=>
           <button key={p.id} onClick={()=>pick(p.prisoner)} className="w-full text-left bg-white hover:bg-red-50 border-2 border-stone-200 hover:border-red-600 rounded-lg p-4 transition-all group">
@@ -456,7 +456,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const tr=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Překládám...","Translating...","Перевожу..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,text);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const save=()=>{addLetter(pr,result||trans||text);setSaved(true);};
   const reTr=async()=>{if(!apiKey){needKey();return;}if(!result||!result.trim())return;setLoading(true);setLmsg(t("Překládám upravenou verzi...","Translating edited version...","Перевожу отредактированную версию..."));setErr("");setTrans("");try{const r=await ai(apiKey,sT,result);setTrans(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
-  const tips=lang==="cs"?["Jsem učitel/ka a zajímám se o vzdělávání","Rád/a čtu knihy a chodím do přírody","Jsem student/ka, píšu poprvé","Chci jen popřát hodně sil","Zajímám se o historii"]:lang==="ru"?["Я педагог, интересуюсь образованием","Люблю читать и бывать на природе","Я студент(ка), пишу впервые","Хочу просто пожелать сил","Интересуюсь историей"]:["I'm a teacher interested in education","I love reading and nature","I'm a student, first time writing","Just want to wish them strength","I'm into history"];
+  const tips=[t("Učím a zajímám se o vzdělávání","I teach and I'm interested in education","Я преподаю и интересуюсь образованием"),t("Čtu knihy a chodím do přírody","I read books and enjoy nature","Читаю книги и люблю бывать на природе"),t("Studuji a píšu poprvé","I'm a student, writing for the first time","Я учусь и пишу впервые"),t("Chci jen popřát hodně sil","I just want to wish strength","Хочу просто пожелать сил"),t("Zajímám se o historii","I'm interested in history","Интересуюсь историей")];
 
   return(<div className="max-w-3xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
