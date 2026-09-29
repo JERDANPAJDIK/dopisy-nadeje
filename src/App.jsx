@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { sW, sC, sT, sO, sM } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
@@ -83,52 +84,6 @@ async function ai(key,sys,msg,img){
   const reader=r.body.getReader();const dec=new TextDecoder();let txt="";while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value,{stream:true}).split("\n")){if(line.startsWith("data: ")){const d=line.slice(6);if(d==="[DONE]")continue;try{const p=JSON.parse(d);if(p.type==="content_block_delta"&&p.delta?.text)txt+=p.delta.text;}catch(e){}}}}return txt||"No response";
 }
 
-const sW=(l,p,lt,sm)=>`You help write letters to political prisoners in Russia.
-RECIPIENT: ${p.ne} (${p.nr}), ${p.a}yo, ${p.pe}. ${p.de}
-TYPE: ${lt} via ${sm}. ${lt==="postcard"?"Keep SHORT — a few sentences.":""} ${sm==="online"?"Max 21000 chars (prisonmail.online).":""}
-
-FACTUAL RULES — the most important part of your job:
-1. Use ONLY facts the user actually wrote about themselves. NEVER invent a name, age, city, profession, hobbies, memories, anecdotes or any biographical detail. Inventing facts about the sender is the worst possible error — the sender would be lying to a prisoner.
-2. If the user wrote specific sentences, wishes or a paragraph, USE them — their text is the core of the letter, you only polish and connect it.
-3. If the user provided little information, you MAY build the letter around the RECIPIENT's interests shown above (e.g. wish them strength in what they love). But keep it about the recipient — do NOT put words, opinions, claimed shared hobbies or invented conversation in the sender's mouth. Write "I know you're interested in X — I hope you can still enjoy it" (about them), NOT "I've always loved X too" or "I often think X is wonderful" (invented sender feelings). Do not claim the sender heard about them, shares their hobby, or has any opinion the user did not state.
-4. If the user provided little information, write a SHORT letter. A short sincere letter is better than a long invented one. Do not pad with generic scenery, weather, café or city descriptions the user did not mention.
-5. If the user did not introduce themselves by name, do not sign any name — end with a warm neutral closing instead.
-6. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
-Length guide: output should be roughly proportional to the user's input, at most about double.
-
-GENDER: FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, fall back to gender-neutral phrasing: prefer present-tense or neutral constructions ("posílám Vám přání", "chci Vám popřát"; in Russian "я пишу", "я хочу пожелать", "шлю Вам"). In that fallback case NEVER write dual endings with a slash (e.g. "chtěl/a", "написал(а)") — that must never appear in the final letter.
-
-CENSORSHIP RULES (letter is read by prison censor):
-NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
-Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels. Do NOT think out loud, do NOT include corrections, drafts, or meta-notes like "(let me correct that)" or separator lines — output only the single finished letter, ready to copy.`;
-
-const sC=(l)=>`Check a letter to a Russian political prisoner against prison censor rules.
-
-REAL problems (flag these): explicit politics, the war, Ukraine, criticism of the state or courts; LGBTQ+ topics; direct commentary on the addressee's criminal case, verdict or its injustice; calls to break rules/law; profanity; an overall bleak, hopeless tone.
-
-NOT problems (never flag these — letters with such phrases routinely pass real censorship):
-- warm sympathy or admiration: "ваша история меня тронула", "вы большая молодец", "выражаю поддержку и восхищение", "вы оказались неравнодушны к происходящему"
-- general life worries: "в мире много страдания", "последние годы тревожно"
-- mentioning that the person is in prison, asking about daily life in the facility, or hoping they stay strong — the addressee IS in prison, this is normal
-- personal facts about the sender (family, marriage, faith, doubts, self-deprecating remarks)
-Only flag a sentence if a censor would PLAUSIBLY reject it. When unsure, do not flag. Overcautious flagging wastes the writer's effort and discourages them.
-
-OUTPUT FORMAT — be brief:
-- If the letter is fine: reply with 1-2 sentences saying it should pass censorship, nothing else. No tables, no checklists, no rule-by-rule breakdown, no length commentary.
-- If there are problems: list ONLY the problematic quotes, each with a one-sentence reason and a suggested replacement. Nothing about the rules that are satisfied.
-- Mention length ONLY if the letter exceeds 21000 characters (prisonmail.online limit).
-Respond in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"}.`;
-const sT=`Translate to natural warm Russian for a letter to a prisoner. If the sender's gender is clear from the text (name, signature, gendered wording), keep the matching Russian forms. Only if it cannot be determined, avoid gendered past-tense verbs for the sender — prefer present tense ("я пишу", "хочу пожелать", "шлю") and never output dual forms like "написал(а)". Output ONLY Russian text.`;
-const sO=(l)=>l==="ru"
-  ?`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written, character by character. Critical rules: (0) READABILITY CHECK FIRST: if the image or document is too blurry, too low-resolution, or otherwise mostly unreadable, output ONLY this line and nothing else: "Изображение не удалось прочитать — текст слишком размытый или в низком разрешении. Попробуйте загрузить более чёткий скан или фото." Do NOT attempt a transcription of an unreadable image — a fabricated letter is far worse than no result. (1) Transcribe ONLY what you can actually read. (2) If a word is completely illegible, write [неразборчиво]. (3) If you can partially read a word but are unsure, write your best reading followed by (?) — e.g. "посылку(?)". (4) NEVER invent text to make sentences flow — broken or incomplete text is fine and expected. (5) Do NOT complete or "improve" anything. (6) Preserve original line breaks. (7) If the document has multiple pages, transcribe them in order and separate them with a line "— страница N —". Inventing plausible text is the worst possible error; uncertainty markers are always better. Output ONLY the transcribed Russian text.`
-  :`You are a precise OCR engine for handwritten Russian. Transcribe EXACTLY what is written. READABILITY CHECK FIRST: if the image or document is too blurry, too low-resolution, or otherwise mostly unreadable, output ONLY this one line and nothing else: "${l==="cs"?"Obraz se nepodařilo přečíst — text je příliš rozmazaný nebo v nízkém rozlišení. Zkuste nahrát ostřejší sken či fotografii.":"The image could not be read — the text is too blurry or low-resolution. Try uploading a sharper scan or photo."}" Do NOT attempt a transcription of an unreadable image — a fabricated letter is far worse than no result. If a word is illegible write [...]; if partially readable but unsure, write your best guess with (?) after it. NEVER invent text to make sentences flow — broken text is expected and fine. If the document has multiple pages, transcribe them in order, separated by "${l==="cs"?"— strana N —":"— page N —"}". Then translate only what was transcribed. Output format:\n## ${l==="cs"?"Ruský text":"Russian text"}\n[exact transcription with [...] and (?) markers]\n## ${l==="cs"?"Český překlad":"English translation"}\n[translation of what was actually transcribed]`;
-const sM=(l)=>`You help match people with political prisoners to write letters to.
-Here is the database of prisoners (JSON): ${JSON.stringify(P.filter(p=>p.o).map(p=>({id:p.i,name:p.ne,age:p.a,prof:p.pe,interests:p.ie,case:p.de,sentence:p.se})))}
-Based on the user's description of themselves, recommend 3 prisoners who would be the best match.
-For each pick write a FACTUAL reason: 1-2 plain sentences stating who the prisoner is and what they were convicted for, taken strictly from the database. If the user and prisoner share a concrete attribute (same profession, similar age, same stated interest), you may state it plainly in one clause. FORBIDDEN: invented emotional resonance, flattery, or speculation about the user ("as an architect you surely know...", "as a believer you have a unique opportunity..."). Never attribute feelings, knowledge or experiences to the user. If nothing concrete is shared, just describe the prisoner — that is enough.
-Respond ONLY with valid JSON in this exact format, nothing else (no markdown, no preamble):
-{"intro":"short neutral opening sentence in ${l==="cs"?"Czech":"English"}","picks":[{"id":"prisoner-id-from-db","reason":"1-2 factual sentences in ${l==="cs"?"Czech":"English"}"}]}
-The picks array must have exactly 3 items. Use the exact id values from the database.`;
 
 
 const TOPICS_CZ=[{l:"🎨 Umění",q:"umění"},{l:"⚽ Sport",q:"sport"},{l:"💻 IT",q:"tech"},{l:"📰 Média",q:"média"},{l:"🔬 Věda",q:"věda"},{l:"⚖️ Právo",q:"právo"},{l:"🇺🇦 Ukrajina",q:"ukrajina"},{l:"🏔 Krym",q:"krym"},{l:"🎭 Kultura",q:"kultura"},{l:"✝️ Víra",q:"náboženství"},{l:"📖 Historie",q:"historie"},{l:"👴 Senioři",q:"důchodce"}];
@@ -414,7 +369,7 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
     if(!apiKey){needKey();return;}
     setLoading(true);setErr("");setResult(null);
     try{
-      const r=await ai(apiKey,sM(lang),about);
+      const r=await ai(apiKey,sM(lang,P),about);
       // Strip markdown fences if present
       const cleaned=r.replace(/```json|```/g,"").trim();
       try{
