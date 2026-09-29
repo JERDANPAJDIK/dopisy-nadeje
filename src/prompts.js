@@ -28,7 +28,7 @@ export const sC=(l)=>`Check a letter to a Russian political prisoner against pri
 REAL problems (flag these): explicit politics, the war, Ukraine, criticism of the state or courts; LGBTQ+ topics; direct commentary on the addressee's criminal case, verdict or its injustice; calls to break rules/law; profanity; an overall bleak, hopeless tone.
 
 NOT problems (never flag these — letters with such phrases routinely pass real censorship):
-- warm sympathy or admiration: "ваша история меня тронула", "вы большая молодец", "выражаю поддержку и восхищение", "вы оказались неравнодушны к происходящему"
+- warm sympathy or admiration: "ваша история меня тронула", "вы большая молодец", "выражаю поддержку и восхищение", "вы оказались неравнодушны к происходящему", "знайте, что я на вашей стороне", "не терять оптимизма"
 - general life worries: "в мире много страдания", "последние годы тревожно"
 - mentioning that the person is in prison, asking about daily life in the facility, or hoping they stay strong — the addressee IS in prison, this is normal
 - personal facts about the sender (family, marriage, faith, doubts, self-deprecating remarks)
