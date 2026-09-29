@@ -14,12 +14,13 @@ FACTUAL RULES — the most important part of your job:
 6. If the user asked to convey something specific (e.g. wish good health), it MUST appear in the letter.
 Length guide: output should be roughly proportional to the user's input, at most about double.
 
-GENDER: ${g==="m"?`The sender is a MAN (chosen by the user). Use masculine forms for the sender consistently (e.g. "napsal jsem", "rád"; in Russian "я написал", "рад").`:g==="f"?`The sender is a WOMAN (chosen by the user). Use feminine forms for the sender consistently (e.g. "napsala jsem", "ráda"; in Russian "я написала", "рада").`:`FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, write the whole letter WITHOUT any gendered form for the sender: no past tense in first person ("napsal", "chtěl", "popřál"), never the word "abych" (it forces a gendered form: write "chci Vám popřát", not "abych Vám popřál"), no gendered adjectives ("rád", "vděčný"). Use present tense and neutral constructions instead ("píšu Vám", "posílám Vám pozdrav", "přeji Vám", "chci Vám popřát", "mám radost"; in Russian "я пишу", "хочу пожелать", "шлю Вам").`}
+GENDER: ${g==="m"?`The sender is a MAN (chosen by the user). Use masculine forms for the sender consistently (e.g. "napsal jsem", "rád"; in Russian "я написал", "рад").`:g==="f"?`The sender is a WOMAN (chosen by the user). Use feminine forms for the sender consistently (e.g. "napsala jsem", "ráda"; in Russian "я написала", "рада").`:`FIRST, follow the sender's own gender. If the user stated or implied their gender (their name, or forms like "napsala jsem", "jsem učitelka"), use the matching gendered forms consistently throughout. ONLY if the sender's gender cannot be determined from what they wrote, write the whole letter WITHOUT any gendered form for the sender: no past tense in first person ("napsal", "chtěl", "popřál"), never the word "abych" (it forces a gendered form: write "chci Vám popřát", not "abych Vám popřál"), no gendered adjectives ("rád", "vděčný"). Use present tense and neutral constructions instead ("píšu Vám", "posílám Vám pozdrav", "přeji Vám", "chci Vám popřát", "mám radost"; in Russian "я пишу", "хочу пожелать", "шлю Вам"). Start the letter with a neutral sentence such as "Posílám Vám srdečný pozdrav." or "Píšu Vám, protože na Vás myslím." — never "Píšu Vám, abych...".`}
 NEVER write dual endings with a slash or brackets (e.g. "chtěl/a", "popřál/a", "написал(а)") — they must never appear in the letter.
 
 CENSORSHIP RULES (letter is read by prison censor):
 NO politics/war/Ukraine. NO LGBTQ+ topics. Don't comment on their case. No profanity. NOT sad, don't pity — keep tone warm and encouraging. Wish strength and health.
-Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. Write the letter directly, no headers or labels. Do NOT think out loud, do NOT include corrections, drafts, or meta-notes like "(let me correct that)" or separator lines — output only the single finished letter, ready to copy.`;
+Output ONLY in ${l==="cs"?"Czech":l==="ru"?"Russian":"English"} — do NOT include Russian translation. No headers or labels.
+OUTPUT FORMAT: if you need to plan or reconsider wording (e.g. which gender-neutral phrasing to use), do it BEFORE the letter. Then put the single finished letter between <letter> and </letter>. Only the text inside the last <letter> block is shown to the user, so it must contain no corrections, drafts, notes like "(let me correct that)" or separator lines — just the letter, ready to copy.`;
 
 export const sC=(l)=>`Check a letter to a Russian political prisoner against prison censor rules.
 
@@ -54,6 +55,14 @@ Each "id" MUST be copied character for character from an "id" field in the datab
 export const DUAL_FORM_RE=/\p{L}\/(a|á|la|ka|y)(?![\p{L}])|\p{L}\(-?(a|á|la|ka|y|а|ла|на|ая)\)/u;
 
 // One-shot repair request when a generated letter still contains dual forms
-export const sWFix=(letter)=>`The letter below contains dual gender forms with a slash or brackets (e.g. "chtěl/a", "написал(а)"), which must never appear. Rewrite it so that it contains no such forms: use present tense and neutral constructions for the sender instead. Change nothing else. Output ONLY the corrected letter.
+export const sWFix=(letter)=>`The letter below contains dual gender forms with a slash or brackets (e.g. "chtěl/a", "написал(а)"), which must never appear. Rewrite it so that it contains no such forms: use present tense and neutral constructions for the sender instead. Change nothing else. Put the corrected letter between <letter> and </letter>.
 
 ${letter}`;
+
+// The model returns the letter inside <letter></letter> (after any planning); take the last block
+export const extractLetter=(s)=>{
+  const all=[...(s||"").matchAll(/<letter>([\s\S]*?)<\/letter>/gi)];
+  if(all.length)return all[all.length-1][1].trim();
+  const i=(s||"").toLowerCase().lastIndexOf("<letter>"); // truncated output without closing tag
+  return i>-1?s.slice(i+8).trim():s;
+};

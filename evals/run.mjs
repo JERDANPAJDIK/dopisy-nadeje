@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE } from "../src/prompts.js";
+import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter } from "../src/prompts.js";
 import { runStreamParserTest } from "./stream-parser.mjs";
 
 const EVALS = path.dirname(fileURLToPath(import.meta.url));
@@ -122,8 +122,8 @@ async function produce(c) {
       const msg = `${t(l, "O mně", "About me", "Обо мне")}: ${input}\n\n${t(l, "Napiš", "Write", "Напиши")} ${lt === "postcard" ? t(l, "pohlednici", "postcard", "открытку") : t(l, "dopis", "letter", "письмо")} pro ${pr.ne}.`;
       // Same flow as gen() in Compose: one repair request if dual gender forms remain
       const sys = sW(l, pr, lt, sm, c.gender || "");
-      let letter = cleanLetter(await claude(sys, msg));
-      if (DUAL_FORM_RE.test(letter)) { const fixed = cleanLetter(await claude(sys, sWFix(letter))); if (fixed) letter = fixed; }
+      let letter = cleanLetter(extractLetter(await claude(sys, msg)));
+      if (DUAL_FORM_RE.test(letter)) { const fixed = cleanLetter(extractLetter(await claude(sys, sWFix(letter)))); if (fixed) letter = fixed; }
       return letter;
     }
     case "sC": return claude(sC(l), input);
@@ -184,6 +184,11 @@ async function check(ch, out, input) {
       // Czech forms that always reveal the sender's gender (conditional, l-participle with "jsem", gendered adjectives)
       const m = /(^|[^\p{L}])(abych|bych|rád|ráda|vděčný|vděčná|\p{L}+la? jsem|jsem \p{L}+la?)(?![\p{L}])/iu.exec(out);
       return !m ? { pass: true } : { pass: false, reason: `gendered sender form "${m[2]}"`, excerpt: excerpt(out, m.index) };
+    }
+    case "clean_letter": {
+      // No leftover tags, separator lines, or think-aloud self-corrections in the shown letter
+      const m = /<\/?letter|^\s*[-–—*_]{3,}\s*$|\(\s*(opravuji|let me|исправляюсь)|\s[–—]\s*ne,/im.exec(out);
+      return !m ? { pass: true } : { pass: false, reason: `think-aloud artifact "${m[0].trim()}"`, excerpt: excerpt(out, m.index) };
     }
     case "no_dual_forms": {
       const m = DUAL_FORM_RE.exec(out);

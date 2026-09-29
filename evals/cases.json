@@ -122,6 +122,9 @@
       "note": "Sasha: with one sentence the AI invented her name, city and profession.",
       "checks": [
         {
+          "type": "clean_letter"
+        },
+        {
           "type": "no_dual_forms"
         },
         {
@@ -143,6 +146,9 @@
       "input": "Chci popřát jen zdraví a nic víc.",
       "note": "Sasha: AI wrote a long invented letter and did not wish health at all.",
       "checks": [
+        {
+          "type": "clean_letter"
+        },
         {
           "type": "regex",
           "pattern": "zdrav",
@@ -170,6 +176,9 @@
       "input": "Jmenuji se Jana, je mi 42 let a jsem učitelka z Brna. Dlouho jsem přemýšlela, co vám napsat. Ráda bych vám popřála hodně sil.",
       "checks": [
         {
+          "type": "clean_letter"
+        },
+        {
           "type": "no_dual_forms"
         },
         {
@@ -187,6 +196,9 @@
       "recipient": "kirill-bunin",
       "input": "Jmenuji se Petr, je mi 50 let a jezdím s tramvají v Praze. Dlouho jsem přemýšlel, jestli vám mám napsat. Rád bych vám poslal pár slov povzbuzení.",
       "checks": [
+        {
+          "type": "clean_letter"
+        },
         {
           "type": "no_dual_forms"
         },
@@ -208,6 +220,9 @@
       "note": "UI switch 'Píšu jako: žena', nothing gendered in the text.",
       "checks": [
         {
+          "type": "clean_letter"
+        },
+        {
           "type": "no_dual_forms"
         },
         {
@@ -228,6 +243,9 @@
       "note": "UI switch 'Píšu jako: muž', nothing gendered in the text.",
       "checks": [
         {
+          "type": "clean_letter"
+        },
+        {
           "type": "no_dual_forms"
         },
         {
@@ -246,6 +264,9 @@
       "input": "Jmenuji se Tomáš, je mi 45 let a pracuji jako knihovník v Olomouci. Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou. Moc mě mrzí, čemu musíte čelit. Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi. Přeji vám hodně sil a trpělivosti.",
       "note": "Sasha: the AI ignored her sentences (regret, question about TV).",
       "checks": [
+        {
+          "type": "clean_letter"
+        },
         {
           "type": "sentences_present",
           "min_overlap": 0.6,
