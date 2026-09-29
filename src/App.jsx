@@ -74,7 +74,7 @@ function fz(q,p,cs){
 
 async function ai(key,sys,msg,img){
   const c=[];
-  if(img){const isPdf=img.type==="application/pdf";c.push({type:isPdf?"document":"image",source:{type:"base64",media_type:img.type,data:img.data}});}
+  if(img){const arr=Array.isArray(img)?img:[img];for(const im of arr)c.push({type:"image",source:{type:"base64",media_type:im.type,data:im.data}});}
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
   const endpoint=img?"https://dopisy-ocr.andrej-novik.workers.dev":"/api/claude";
@@ -634,11 +634,38 @@ function Scan({cs,lang,apiKey,back,needKey}){
   const [loading,setLoading]=useState(false);const [result,setResult]=useState(null);const [err,setErr]=useState("");
   const ref=useRef();
   const resizeImg=(file,maxDim=1500)=>new Promise(res=>{const rd=new FileReader();rd.onload=e=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(im,0,0,w,h);const d=cv.toDataURL("image/jpeg",0.75);res({type:"image/jpeg",data:d.split(",")[1],preview:d});};im.src=e.target.result;};rd.readAsDataURL(file);});
-  const readRaw=(file)=>new Promise((res,rej)=>{const rd=new FileReader();rd.onload=e=>{const d=e.target.result;res({type:file.type,data:d.split(",")[1]});};rd.onerror=()=>rej(new Error("read error"));rd.readAsDataURL(file);});
+  const MAX_PAGES=10;
+  const pdfToImages=async(file)=>{
+    const pdfjsLib=await import("pdfjs-dist");
+    const workerUrl=(await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+    pdfjsLib.GlobalWorkerOptions.workerSrc=workerUrl;
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const n=Math.min(pdf.numPages,MAX_PAGES);
+    const pages=[];
+    for(let i=1;i<=n;i++){
+      const page=await pdf.getPage(i);
+      let vp=page.getViewport({scale:1});
+      const scale=Math.min(1500/Math.max(vp.width,vp.height),3);
+      vp=page.getViewport({scale});
+      const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+      const d=cv.toDataURL("image/jpeg",0.75);
+      pages.push({type:"image/jpeg",data:d.split(",")[1],preview:d});
+    }
+    return {pages,total:pdf.numPages};
+  };
   const ld=async f=>{if(!f)return;setErr("");setResult(null);
     if(f.type==="application/pdf"){
-      if(f.size>14*1024*1024){setErr(t("PDF je příliš velké (max 14 MB). Zkuste ho zmenšit nebo pošlete jednotlivé stránky jako obrázky.","PDF is too large (max 14 MB). Try compressing it or send individual pages as images.","PDF слишком большой (макс. 14 МБ). Попробуйте сжать его или отправьте страницы как изображения."));return;}
-      const r=await readRaw(f);setImg({type:r.type,data:r.data});setPrev({pdf:true,name:f.name});return;
+      try{
+        setLoading(true);
+        const {pages,total}=await pdfToImages(f);
+        setImg(pages.map(p=>({type:p.type,data:p.data})));
+        setPrev({pdf:true,name:f.name,shown:pages.length,total,img:pages[0].preview});
+        if(total>MAX_PAGES)setErr(t(`PDF má ${total} stran — zpracuje se prvních ${MAX_PAGES}.`,`PDF has ${total} pages — only the first ${MAX_PAGES} will be processed.`,`В PDF ${total} страниц — будут обработаны первые ${MAX_PAGES}.`));
+      }catch(e){setErr(t("PDF se nepodařilo načíst. Zkuste ho převést na obrázek.","Could not read the PDF. Try converting it to an image.","Не удалось открыть PDF. Попробуйте сохранить его как изображение."));}
+      finally{setLoading(false);}
+      return;
     }
     const r=await resizeImg(f);setImg({type:r.type,data:r.data});setPrev({img:r.preview});};
   const go=async()=>{if(!apiKey){needKey();return;}if(!img)return;setLoading(true);setErr("");setResult(null);try{const r=await ai(apiKey,sO(lang),t("Rozpoznej a přelož tento dopis.","Recognize and translate.","Распознай текст на изображении. Выведи только распознанный текст."),img);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
@@ -651,7 +678,7 @@ function Scan({cs,lang,apiKey,back,needKey}){
     </div>
     <input type="file" accept="image/*,application/pdf" ref={ref} className="hidden" onChange={e=>ld(e.target.files[0])}/>
     {!prev?<button onClick={()=>ref.current?.click()} className="w-full border-2 border-dashed border-stone-300 rounded-lg py-12 text-center hover:border-red-600"><div className="text-3xl mb-2">📄</div><div className="text-stone-400 text-sm">{t("Nahrát sken nebo PDF","Upload scan or PDF","Загрузить скан или PDF")}</div></button>
-    :<div>{prev.pdf?<div className="flex items-center gap-3 bg-stone-50 border rounded-lg p-4 mb-3"><div className="text-3xl">📄</div><div className="text-sm text-stone-600 break-all">{prev.name}</div></div>:<img src={prev.img} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>}
+    :<div>{prev.pdf?<div className="mb-3"><img src={prev.img} alt="" className="max-w-full max-h-80 rounded-lg border mb-1"/><div className="text-xs text-stone-500">📄 {prev.name}{prev.total>1?` · ${t(`${prev.shown} z ${prev.total} stran`,`${prev.shown} of ${prev.total} pages`,`${prev.shown} из ${prev.total} страниц`)}`:""}</div></div>:<img src={prev.img} alt="" className="max-w-full max-h-80 rounded-lg border mb-3"/>}
       <div className="flex gap-2"><button onClick={go} disabled={loading} className="bg-red-700 hover:bg-red-800 disabled:bg-stone-300 text-white px-6 py-2 rounded font-bold text-sm" style={{fontFamily:"system-ui"}}>🔍 {t("Rozpoznat","Recognize","Распознать")}</button>
       <button onClick={()=>{setPrev(null);setImg(null);setResult(null);setErr("");}} className="text-stone-400 text-sm px-3">{t("Jiný soubor","Different file","Другой файл")}</button></div></div>}
     {loading&&<div className="flex items-center gap-2 text-stone-500 text-sm mt-4" style={{fontFamily:"system-ui"}}><div className="w-4 h-4 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{t("Rozpoznávám...","Recognizing...","Распознаю...")}</div>}
