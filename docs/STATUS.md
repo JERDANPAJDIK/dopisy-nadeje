@@ -5,7 +5,7 @@ Aktualizováno: 2026-10-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`, 
 ## Hotovo
 - **Vězni živě z OVD-Info (10/2026):** `netlify/functions/prisoners.mjs` na `/api/prisoners` stahuje `profiles` s filtrem Věstočky (`is_imprisoned`, `online_letters_now`, `hide_from_products=false`) – dnes 1 171 lidí, fotky, adresy, tresty. CDN cache 6 h (OVD-Info se aktualizuje po 6 h). Česká jména, profese, města a tresty (správné tvary „года/лет“) se tvoří na serveru.
 - Pole `P` v `App.jsx` je teď jen překryv: 45 vězňů s texty Gulag.cz (české jméno a popis, profese, zájmy); věk, trest, adresu a EN/RU popis bere vždy z OVD-Info. 5 ručních záznamů, které OVD-Info nevede, je na konci seznamu. Když API selže, aplikace ukáže jen `P`.
-- Česky: popis bez textu od Gulag.cz překládá Claude při otevření profilu / doporučení (`sD`), cache v localStorage (`dopisy-nadeje-cs`), označeno „Automatický překlad“.
+- Česky: popis bez textu od Gulag.cz překládá Claude při otevření profilu / doporučení (`sD`), cache v localStorage (`dopisy-nadeje-cs`), označeno „Automatický překlad“. Výstup ve značkách `<t id>`, ne JSON (uvozovky v názvech organizací rozbíjely JSON); pevné termíny pro ruské kolonie.
 - Doporučení (`sM`) dostává zkrácený seznam všech vězňů (id | věk | pohlaví | profese | zájmy), ~15k tokenů na dotaz.
 - Seznam: fotky, město, stránkování po 30, hledání ve všech jazycích podle začátků slov (už nenajde „art“ v „party“). Odkaz „Celý příběh na Vestochka.io“ u všech z OVD-Info.
 - CZ/EN/RU UI, sbírka dopisů v localStorage, FAQ, návody k odeslání.
@@ -38,7 +38,9 @@ Aktualizováno: 2026-10-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`, 
 
 ## Čeká na nás / na ověření
 - **Netlify: nastavit env proměnnou `OVD_API_KEY`** (klíč z mailu Věstočky 6. 10.) – bez ní `/api/prisoners` vrací 500 a aplikace jede jen na ručním seznamu.
-- Po nasazení spustit `npm run eval -- sD` a `npm run eval -- sM-live` (doporučení nad celým seznamem a český překlad zatím ověřené jen s napodobeným AI).
+- Nasazeno a ověřeno na produkci 29. 10. (1 171 vězňů, CDN cache funguje, český překlad i doporučení s reálným AI). Evaly `npm run eval -- sD` a `npm run eval -- sM-live` zatím nespuštěné.
+- **Rate limit 30 dotazů/h na IP v `claude.js` je pro školy málo:** třída za jednou školní IP udělá ~5 AI dotazů na žáka (doporučení, překlad popisu, dopis, překlad dopisu) → po 6 žácích stop. Rozhodnout: zvednout limit (cena/zneužití) nebo jiný klíč než IP.
+- Doporučení nad celým seznamem trvá 13–18 s (~15k tokenů vstupu). Kdyby to vadilo: prompt caching, nebo předvýběr kandidátů.
 - Saša: projít 5 ručních záznamů mimo OVD-Info (Vlasovová, Jelcovová, Oleksij a Anželika Děmjaněnkovi, Bujanovová) – nechat, nebo vyřadit? A nové ruské texty v UI (hláška o načítání, patička, „Полная история на «Весточке»“, krok 01 na úvodu).
 - Data OVD-Info občas nesedí sama se sebou (Ponomarenková: `sentence_months` = 2 roky 3 měsíce, text „к шести годам“) – ukazujeme, co OVD-Info dává.
 - Vyřazeni jako propuštění/v zahraničí: Skočilenko, Orlov, Čanyševa, Fadějeva, Moskaljov. Kozyrevová byla v ručních datech vedená jako propuštěná, OVD-Info ji vede ve vězení – opraveno podle OVD-Info.
