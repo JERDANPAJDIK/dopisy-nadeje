@@ -115,7 +115,7 @@ function clientId(){
   return _cid;
 }
 
-async function ai(key,sys,msg,img){
+async function ai(key,sys,msg,img,opts){
   const c=[];
   if(img){const arr=Array.isArray(img)?img:[img];for(const im of arr)c.push({type:"image",source:{type:"base64",media_type:im.type,data:im.data}});}
   c.push({type:"text",text:msg});
@@ -123,7 +123,7 @@ async function ai(key,sys,msg,img){
   const endpoint=img?"https://dopisy-ocr.andrej-novik.workers.dev":"/api/claude";
   const headers={"Content-Type":"application/json"};
   if(!img)headers["X-Client-Id"]=clientId();
-  const r=await fetch(endpoint,{method:"POST",headers,body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
+  const r=await fetch(endpoint,{method:"POST",headers,body:JSON.stringify({system:sys,messages:[{role:"user",content:c}],...(opts&&opts.fast?{fast:true}:{})})});
   if(r.status===429)throw new Error(t("Teď je k AI příliš mnoho dotazů z tohoto zařízení nebo sítě. Zkuste to prosím za chvíli.","Too many AI requests from this device or network right now. Please try again in a while.","Сейчас слишком много запросов к ИИ с этого устройства или из этой сети. Попробуйте, пожалуйста, чуть позже."));
   if(!r.ok){const e=await r.text().catch(()=>"");throw new Error(e||"API error "+r.status);}
   // Buffer partial lines: an SSE "data:" line can be split across network chunks
@@ -231,16 +231,26 @@ function PrisonerDesc({ p, cz, busy, fail, className, noNote }) {
 const CS_KEY = "dopisy-nadeje-cs";
 const readCs = () => { try { return JSON.parse(localStorage.getItem(CS_KEY) || "{}"); } catch (e) { return {}; } };
 const cachedCs = (p, cache) => p.d || (cache[p.i] && cache[p.i].u === p.u ? cache[p.i].d : "");
-async function csDescs(prs) {
+// Small batches (8) on the fast model, 3 in parallel; onPart gets results as each batch finishes
+async function csDescs(prs, onPart) {
   const cache = readCs();
   const need = prs.filter(p => !cachedCs(p, cache) && p.dr);
-  for (let k = 0; k < need.length; k += 25) {
-    const chunk = need.slice(k, k + 25);
-    const r = await ai("server-managed", sD, JSON.stringify(Object.fromEntries(chunk.map(p => [p.i, p.dr]))));
-    const j = parseTranslations(r);
-    if (!Object.keys(j).length) throw new Error("translation failed");
-    for (const p of chunk) if (typeof j[p.i] === "string" && j[p.i].trim()) cache[p.i] = { u: p.u, d: j[p.i].trim() };
-  }
+  const chunks = [];
+  for (let k = 0; k < need.length; k += 8) chunks.push(need.slice(k, k + 8));
+  const result = () => Object.fromEntries(prs.map(p => [p.i, cachedCs(p, cache)]));
+  let failed = 0, next = 0;
+  const worker = async () => {
+    while (next < chunks.length) {
+      const chunk = chunks[next++];
+      try {
+        const j = parseTranslations(await ai("server-managed", sD, JSON.stringify(Object.fromEntries(chunk.map(p => [p.i, p.dr]))), null, { fast: true }));
+        for (const p of chunk) if (typeof j[p.i] === "string") cache[p.i] = { u: p.u, d: j[p.i] };
+        if (!Object.keys(j).length) failed++;
+      } catch (e) { failed++; }
+      if (onPart) onPart(result());
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
   if (need.length) {
     try {
       const ks = Object.keys(cache);
@@ -248,7 +258,8 @@ async function csDescs(prs) {
       localStorage.setItem(CS_KEY, JSON.stringify(cache));
     } catch (e) {}
   }
-  return Object.fromEntries(prs.map(p => [p.i, cachedCs(p, cache)]));
+  if (failed && failed === chunks.length) throw new Error("translation failed");
+  return result();
 }
 function useCsDesc(prs, lang) {
   const ids = prs.map(p => p.i).join(",");
@@ -264,7 +275,7 @@ function useCsDesc(prs, lang) {
     if (prs.every(p => cachedCs(p, cache) || !p.dr)) return;
     let off = false;
     setBusy(true);
-    csDescs(prs).then(r => { if (!off) setM(r); }).catch(() => { if (!off) setFail(true); }).finally(() => { if (!off) setBusy(false); });
+    csDescs(prs, r => { if (!off) setM(r); }).then(r => { if (!off) setM(r); }).catch(() => { if (!off) setFail(true); }).finally(() => { if (!off) setBusy(false); });
     return () => { off = true; };
   }, [ids, lang]);
   return { m, busy, fail };

@@ -142,7 +142,7 @@ async function produce(c) {
     case "sC": return claude(sC(l), input);
     case "sT": return claude(sT, input);
     case "sM": return extractTag(await claude(sM(l, c.db === "live" ? await liveDb() : P), input), "json"); // same as Match in App.jsx
-    case "sD": return JSON.stringify(parseTranslations(await claude(sD, input))); // Czech translation of prisoner descriptions (csDescs in App.jsx)
+    case "sD": return JSON.stringify(parseTranslations(await claude(sD, input, { model: "claude-haiku-4-5" }))); // Czech translation of prisoner descriptions (csDescs in App.jsx, fast model)
     case "sO": {
       const images = c.pdf_file ? await pdfToJpegs(path.join(EVALS, c.pdf_file)) : await imageToJpeg(path.join(EVALS, c.image_file));
       return gemini(sO(l), t(l, "Rozpoznej a přelož tento dopis.", "Recognize and translate.", "Распознай текст на изображении. Выведи только распознанный текст."), images);

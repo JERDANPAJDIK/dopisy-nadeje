@@ -49,14 +49,15 @@ export default async (req, context) => {
     });
   }
   try {
-    const { system, messages } = await req.json();
+    const { system, messages, fast } = await req.json();
     const hasImage = messages?.some(m =>
       Array.isArray(m.content) && m.content.some(c => c.type === "image")
     );
     if (hasImage && geminiKey) {
       return await handleGeminiStream(geminiKey, system, messages);
     }
-    return await handleClaude(anthropicKey, system, messages);
+    // fast: short bulk tasks (Czech translation of prisoner descriptions) go to the faster, cheaper model
+    return await handleClaude(anthropicKey, system, messages, fast === true ? "claude-haiku-4-5" : "claude-sonnet-4-6");
   } catch (err) {
     return new Response(JSON.stringify({ error: { message: err.message || "Proxy error" } }), {
       status: 500, headers: { "Content-Type": "application/json" },
@@ -64,7 +65,7 @@ export default async (req, context) => {
   }
 };
 
-async function handleClaude(apiKey, system, messages) {
+async function handleClaude(apiKey, system, messages, model) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -72,7 +73,7 @@ async function handleClaude(apiKey, system, messages) {
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, stream: true, system, messages }),
+    body: JSON.stringify({ model, max_tokens: 4000, stream: true, system, messages }),
   });
   return new Response(response.body, {
     status: response.status,
