@@ -37,6 +37,8 @@ Aktualizováno: 2026-10-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`, 
 - Evaly: každý případ běží 3×, modely kolísají; sledovat procenta v REPORT.md.
 
 ## Čeká na nás / na ověření
+- **Ověřit s Gulag.cz (nasazeno 29. 10. v použitelné podobě):** (1) Petra: text publicity OP JAK na úvodní stránce a v patičce (chybí hlavní cíl projektu ze žádosti) a umístění logolinku EU+MŠMT (oficiální soubory z opjak.cz, verze od 4/2026). (2) Saša / Věstočka: formulace „Data a fotografie vězňů: OVD-Info. Děkujeme týmu Věstočky, projektu OVD-Info…“ – chtějí být uvedeni jako OVD-Info, nebo Věstočka? (3) Čísla „2 136 vězňů“ / „přes 2 100 lidí“ na úvodu nemají uvedený zdroj.
+- Patička: poděkování jen Alza.cz (Erasmus+ a MZV odstraněny – nefinancují tuto aplikaci).
 - **Netlify: nastavit env proměnnou `OVD_API_KEY`** (klíč z mailu Věstočky 6. 10.) – bez ní `/api/prisoners` vrací 500 a aplikace jede jen na ručním seznamu.
 - Nasazeno a ověřeno na produkci 29. 10. (1 171 vězňů, CDN cache funguje, český překlad i doporučení s reálným AI). Evaly `npm run eval -- sD` a `npm run eval -- sM-live` zatím nespuštěné.
 - **OCR Worker:** v `workers/ocr/worker.js` zvednut limit z 20 na 150 dotazů/h na IP (třída za jednou IP). Worker se nasazuje ručně v Cloudflare dashboardu – změna platí až po vložení nového kódu tam.
