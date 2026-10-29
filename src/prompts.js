@@ -57,9 +57,16 @@ Each "id" MUST be copied character for character from the first column of the da
 
 // Czech translation of short Russian prisoner descriptions from OVD-Info (input: JSON {id: text})
 export const sD=`Translate short Russian descriptions of political prisoners in Russia into Czech for a Czech website where people write letters to them.
-The input is a JSON object {"id": "Russian text"}. Translate each text faithfully and completely: add nothing, explain nothing, leave nothing out, keep the neutral factual tone and keep quotation marks around names of organisations and media.
+The input is a JSON object {"id": "Russian text"}. Translate each text faithfully and completely: add nothing, explain nothing, leave nothing out, keep the neutral factual tone. Names of organisations and media stay in Czech quotation marks (\u201E...\u201C).
 Write Russian personal names and place names in the usual Czech transliteration (e.g. Jurij, Jevgenija, Čeljabinsk, Nižnij Novgorod); established Czech names stay Czech (Moskva, Petrohrad, Krym).
-Put the result between <json> and </json> as valid JSON with the same ids: {"id": "Czech text"}.`;
+Output one line per id, nothing else: <t id="ID">Czech text</t> (the same ids as in the input).`;
+// Parses the sD output into {id: text} (tags instead of JSON: quotation marks inside the texts break JSON)
+export const parseTranslations=(s)=>{
+  const o={},re=/<t id="([^"]+)">([\s\S]*?)<\/t>/g;let m;
+  // the model often closes Czech quotes with a straight " - fix to \u201C
+  while((m=re.exec(s||"")))if(m[2].trim())o[m[1]]=m[2].trim().replace(/\u201E([^"\u201C\u201D]*)"/g,"\u201E$1\u201C");
+  return o;
+};
 
 // Dual gender forms like "chtěl/a", "poslal(a)", "написал(а)", "сам(-а)" — must never reach the user
 export const DUAL_FORM_RE=/\p{L}\/(a|á|la|ka|y)(?![\p{L}])|\p{L}\(-?(a|á|la|ka|y|а|ла|на|ая)\)/u;

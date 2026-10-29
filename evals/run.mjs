@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sW, sC, sT, sO, sM, sD, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "../src/prompts.js";
+import { sW, sC, sT, sO, sM, sD, parseTranslations, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "../src/prompts.js";
 import { runStreamParserTest } from "./stream-parser.mjs";
 
 const EVALS = path.dirname(fileURLToPath(import.meta.url));
@@ -142,7 +142,7 @@ async function produce(c) {
     case "sC": return claude(sC(l), input);
     case "sT": return claude(sT, input);
     case "sM": return extractTag(await claude(sM(l, c.db === "live" ? await liveDb() : P), input), "json"); // same as Match in App.jsx
-    case "sD": return extractTag(await claude(sD, input), "json"); // Czech translation of prisoner descriptions (csDescs in App.jsx)
+    case "sD": return JSON.stringify(parseTranslations(await claude(sD, input))); // Czech translation of prisoner descriptions (csDescs in App.jsx)
     case "sO": {
       const images = c.pdf_file ? await pdfToJpegs(path.join(EVALS, c.pdf_file)) : await imageToJpeg(path.join(EVALS, c.image_file));
       return gemini(sO(l), t(l, "Rozpoznej a přelož tento dopis.", "Recognize and translate.", "Распознай текст на изображении. Выведи только распознанный текст."), images);

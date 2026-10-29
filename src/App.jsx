@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { sW, sC, sT, sO, sM, sD, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
+import { sW, sC, sT, sO, sM, sD, parseTranslations, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
@@ -216,7 +216,8 @@ async function csDescs(prs) {
   const need = prs.filter(p => !cachedCs(p, cache) && p.dr);
   if (need.length) {
     const r = await ai("server-managed", sD, JSON.stringify(Object.fromEntries(need.map(p => [p.i, p.dr]))));
-    const j = JSON.parse(extractTag(r, "json").replace(/```json|```/g, "").trim());
+    const j = parseTranslations(r);
+    if (!Object.keys(j).length) throw new Error("translation failed");
     for (const p of need) if (typeof j[p.i] === "string" && j[p.i].trim()) cache[p.i] = { u: p.u, d: j[p.i].trim() };
     try {
       const ks = Object.keys(cache);
