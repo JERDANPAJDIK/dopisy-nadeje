@@ -228,7 +228,8 @@ function PrisonerDesc({ p, cz, busy, fail, className, noNote }) {
 }
 
 // Czech translations of OVD-Info descriptions, cached in the browser (keyed by the profile's update time)
-const CS_KEY = "dopisy-nadeje-cs";
+const CS_KEY = "dopisy-nadeje-cs2"; // bump when the translation prompt changes (old translations are dropped)
+try { localStorage.removeItem("dopisy-nadeje-cs"); } catch (e) {}
 const readCs = () => { try { return JSON.parse(localStorage.getItem(CS_KEY) || "{}"); } catch (e) { return {}; } };
 const cachedCs = (p, cache) => p.d || (cache[p.i] && cache[p.i].u === p.u ? cache[p.i].d : "");
 // Small batches (8) on the fast model, 3 in parallel; onPart gets results as each batch finishes
