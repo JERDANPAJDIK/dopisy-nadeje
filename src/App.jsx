@@ -1,42 +1,41 @@
 import { useState, useRef, useEffect } from "react";
-import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
+import { sW, sC, sT, sO, sM, sD, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
-  {i:"antonina-favorskaya",n:"Antonina Favorskaja",ne:"Antonina Favorskaya",nr:"Кравцова Антонина",a:36,p:"Novinářka",pe:"Journalist",int:["Žurnalistika","Fotografie","Film"],ie:["Journalism","Photography","Cinema"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Novinářka SOTAvision. Natočila poslední video Navalného a reportáže o jeho pohřbu. Zadržena v kavárně po návštěvě jeho hrobu. Odsouzena spolu se třemi dalšími novináři.",de:"SOTAvision journalist. Filmed last video of Navalny and reported on his funeral. Detained in café after visiting his grave. Convicted with three other journalists.",ad:"156511, Костромская обл., пос. Прибрежный, ул. Мира 1, ФКУ ИК-3",o:true,v:"https://vestochka.io/en/p/antonina-kravtsova-favorskaia",g:"f",src:"gulag",pru:"Журналистка",sr:"5 лет",dr:"Журналистка SOTAvision. Сняла последнее видео Навального и репортажи с его похорон. Задержана в кафе после посещения его могилы. Осуждена вместе с тремя другими журналистами."},
-  {i:"yevgenia-maiboroda",n:"Jevgenija Majboroda",ne:"Yevgenia Maiboroda",nr:"Майборода Евгения",a:74,p:"Důchodkyně",pe:"Retiree",int:[],ie:[],s:"5,5 let",se:"5.5 years",d:"74letá důchodkyně odsouzená za protiválečné výroky.",de:"74-year-old retiree convicted for anti-war statements.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Пенсионерка",sr:"5,5 лет",dr:"74-летняя пенсионерка, осуждённая за антивоенные высказывания."},
-  {i:"alexander-gabyshev",n:"Alexandr Gabyšev",ne:"Alexander Gabyshev",nr:"Габышев Александр",a:57,p:"Šaman",pe:"Shaman",int:["Spiritualita","Příroda"],ie:["Spirituality","Nature"],s:"Psychiatr. léčebna",se:"Psychiatric facility",d:"Jakutský šaman, vydal se pěšky do Moskvy. Od 2021 v psychiatrické léčebně.",de:"Yakut shaman who walked toward Moscow. In psychiatric facility since 2021.",ad:"",o:false,v:"",g:"m",src:"gulag",sr:"Psychiatric facility",dr:"Якутский шаман, отправившийся пешком в Москву. С 2021 года содержится в психиатрическом учреждении."},
-  {i:"darya-polyudova",n:"Darja Poljudova",ne:"Darya Polyudova",nr:"Полюдова Дарья",a:37,p:"Aktivistka",pe:"Activist",int:["Aktivismus","Lidská práva"],ie:["Activism","Human rights"],s:"9 let",se:"9 years",d:"Levicová aktivistka odsouzená za protiválečný postoj.",de:"Left-wing activist convicted for anti-war stance.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Активистка",sr:"9 лет",dr:"Левая активистка, осуждённая за антивоенную позицию."},
-  {i:"yuri-dmitriev",n:"Jurij Dmitrijev",ne:"Yuri Dmitriev",nr:"Дмитриев Юрий",a:70,p:"Historik",pe:"Historian",int:["Historie","Archeologie","Paměť"],ie:["History","Archaeology","Memory"],s:"15 let",se:"15 years",d:"Historik z Petrozavodska. Objevil masový hrob v Sandarmoku s ostatky 9 000+ popravených. Odsouzen ve vykonstruovaném procesu. Jeden z nejdůležitějších strážců historické paměti v Rusku.",de:"Historian from Petrozavodsk. Discovered mass grave at Sandarmokh with 9,000+ executed. Convicted in fabricated case. One of Russia's most important guardians of historical memory.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Историк",sr:"15 лет",dr:"Историк из Петрозаводска. Обнаружил массовое захоронение в Сандармохе с останками более 9 000 расстрелянных. Осуждён по сфабрикованному делу. Один из важнейших хранителей исторической памяти в России."},
-  {i:"anna-arkhipova",n:"Anna Archipova",ne:"Anna Arkhipova",nr:"Архипова Анна",a:28,p:"Studentka",pe:"Student",int:["Vzdělávání"],ie:["Education"],s:"Vazba, hrozí 15 let",se:"Custody, up to 15 years",d:"Mladá studentka ve vazbě za protiválečný postoj.",de:"Young student in custody for anti-war stance.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Студентка",sr:"Под стражей, грозит до 15 лет",dr:"Молодая студентка, находящаяся под стражей за антивоенную позицию."},
+  {i:"antonina-kravtsova-favorskaia",n:"Antonina Favorskaja",ne:"Antonina Favorskaya",nr:"Кравцова Антонина",a:36,p:"Novinářka",pe:"Journalist",int:["Žurnalistika","Fotografie","Film"],ie:["Journalism","Photography","Cinema"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Novinářka SOTAvision. Natočila poslední video Navalného a reportáže o jeho pohřbu. Zadržena v kavárně po návštěvě jeho hrobu. Odsouzena spolu se třemi dalšími novináři.",de:"SOTAvision journalist. Filmed last video of Navalny and reported on his funeral. Detained in café after visiting his grave. Convicted with three other journalists.",ad:"156511, Костромская обл., пос. Прибрежный, ул. Мира 1, ФКУ ИК-3",o:true,v:"https://vestochka.io/en/p/antonina-kravtsova-favorskaia",g:"f",src:"gulag",pru:"Журналистка",sr:"5 лет",dr:"Журналистка SOTAvision. Сняла последнее видео Навального и репортажи с его похорон. Задержана в кафе после посещения его могилы. Осуждена вместе с тремя другими журналистами."},
+  {i:"evgenia-maiboroda",n:"Jevgenija Majboroda",ne:"Yevgenia Maiboroda",nr:"Майборода Евгения",a:74,p:"Důchodkyně",pe:"Retiree",int:[],ie:[],s:"5,5 let",se:"5.5 years",d:"74letá důchodkyně odsouzená za protiválečné výroky.",de:"74-year-old retiree convicted for anti-war statements.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Пенсионерка",sr:"5,5 лет",dr:"74-летняя пенсионерка, осуждённая за антивоенные высказывания."},
+  {i:"aleksandr-gabyshev",n:"Alexandr Gabyšev",ne:"Alexander Gabyshev",nr:"Габышев Александр",a:57,p:"Šaman",pe:"Shaman",int:["Spiritualita","Příroda"],ie:["Spirituality","Nature"],s:"Psychiatr. léčebna",se:"Psychiatric facility",d:"Jakutský šaman, vydal se pěšky do Moskvy. Od 2021 v psychiatrické léčebně.",de:"Yakut shaman who walked toward Moscow. In psychiatric facility since 2021.",ad:"",o:false,v:"",g:"m",src:"gulag",sr:"Psychiatric facility",dr:"Якутский шаман, отправившийся пешком в Москву. С 2021 года содержится в психиатрическом учреждении."},
+  {i:"dariia-poliudova",n:"Darja Poljudova",ne:"Darya Polyudova",nr:"Полюдова Дарья",a:37,p:"Aktivistka",pe:"Activist",int:["Aktivismus","Lidská práva"],ie:["Activism","Human rights"],s:"9 let",se:"9 years",d:"Levicová aktivistka odsouzená za protiválečný postoj.",de:"Left-wing activist convicted for anti-war stance.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Активистка",sr:"9 лет",dr:"Левая активистка, осуждённая за антивоенную позицию."},
+  {i:"yurii-dmitriev",n:"Jurij Dmitrijev",ne:"Yuri Dmitriev",nr:"Дмитриев Юрий",a:70,p:"Historik",pe:"Historian",int:["Historie","Archeologie","Paměť"],ie:["History","Archaeology","Memory"],s:"15 let",se:"15 years",d:"Historik z Petrozavodska. Objevil masový hrob v Sandarmoku s ostatky 9 000+ popravených. Odsouzen ve vykonstruovaném procesu. Jeden z nejdůležitějších strážců historické paměti v Rusku.",de:"Historian from Petrozavodsk. Discovered mass grave at Sandarmokh with 9,000+ executed. Convicted in fabricated case. One of Russia's most important guardians of historical memory.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Историк",sr:"15 лет",dr:"Историк из Петрозаводска. Обнаружил массовое захоронение в Сандармохе с останками более 9 000 расстрелянных. Осуждён по сфабрикованному делу. Один из важнейших хранителей исторической памяти в России."},
+  {i:"anna-arkhipova",n:"Anna Archipova",ne:"Anna Arkhipova",nr:"Архипова Анна",a:28,p:"Studentka",pe:"Student",int:["Vzdělávání"],ie:["Education"],s:"Vazba, hrozí 15 let",se:"Custody, up to 15 years",d:"",de:"Young student in custody for anti-war stance.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Студентка",sr:"Под стражей, грозит до 15 лет",dr:"Молодая студентка, находящаяся под стражей за антивоенную позицию."},
   {i:"bakhrom-khamroev",n:"Bachrom Chamrojev",ne:"Bakhrom Khamroev",nr:"Хамроев Бахром",a:62,p:"Lidskoprávní aktivista",pe:"HR activist",int:["Lidská práva","Migrace"],ie:["Human rights","Migration"],s:"13 let 9 měs.",se:"13 years 9 months",d:"Uzbecký aktivista, bránil práva migrantů v Moskvě.",de:"Uzbek activist who defended migrants in Moscow.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Правозащитник",sr:"13 лет",dr:"Узбекский активист, защищавший права мигрантов в Москве."},
   {i:"irina-navalnaia",n:"Irina Navalnaja",ne:"Irina Navalnaia",nr:"Навальная Ирина",a:28,p:"Ukrajinka",pe:"Ukrainian civilian",int:[],ie:[],s:"8 let",se:"8 years",d:"Ukrajinská civilistka z Chersonu odsouzená za údajnou vlastizradu.",de:"Ukrainian civilian from Kherson convicted of alleged treason.",ad:"",o:true,v:"https://vestochka.io/en/p/irina-navalnaia",g:"f",src:"gulag",pru:"Украинка",sr:"8 лет",dr:"Украинская гражданская, осуждённая за якобы государственную измену в Херсоне."},
   {i:"vadim-bektemirov",n:"Vadim Běktěmirov",ne:"Vadim Bektemirov",nr:"Бектемиров Вадим",a:44,p:"Překladatel",pe:"Translator",int:["Jazyky","Literatura"],ie:["Languages","Literature"],s:"11 let",se:"11 years",d:"Překladatel z Krymu, pronásledování krymských Tatarů.",de:"Translator from Crimea, Crimean Tatar persecution.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Переводчик",sr:"11 лет",dr:"Переводчик из Крыма, преследуемый по делам крымских татар."},
-  {i:"aleksei-gorinov",n:"Alexej Gorinov",ne:"Aleksei Gorinov",nr:"Горинов Алексей",a:64,p:"Politik",pe:"Politician",int:["Politika","Právo"],ie:["Politics","Law"],s:"7 let",se:"7 years",d:"Moskevský zastupitel odsouzený za protiválečný transparent.",de:"Moscow deputy convicted for anti-war sign at council meeting.",ad:"",o:true,v:"https://vestochka.io/en/p/aleksei-gorinov",g:"m",src:"gulag",pru:"Политик",sr:"7 лет",dr:"Депутат муниципального собрания Москвы, осуждённый за антивоенный плакат на заседании."},
-  {i:"aleksei-nuriev",n:"Alexej Nurijev",ne:"Aleksei Nuriev",nr:"Нуриев Алексей",a:40,p:"Záchranář",pe:"Rescue worker",int:[],ie:[],s:"19 let",se:"19 years",d:"Zaměstnanec ministerstva pro mimořádné situace, 19 let.",de:"Emergency Ministry employee sentenced to 19 years.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Спасатель",sr:"19 лет",dr:"Сотрудник МЧС, приговорённый к 19 годам."},
+  {i:"alexei-gorinov",n:"Alexej Gorinov",ne:"Aleksei Gorinov",nr:"Горинов Алексей",a:64,p:"Politik",pe:"Politician",int:["Politika","Právo"],ie:["Politics","Law"],s:"7 let",se:"7 years",d:"Moskevský zastupitel odsouzený za protiválečný transparent.",de:"Moscow deputy convicted for anti-war sign at council meeting.",ad:"",o:true,v:"https://vestochka.io/en/p/aleksei-gorinov",g:"m",src:"gulag",pru:"Политик",sr:"7 лет",dr:"Депутат муниципального собрания Москвы, осуждённый за антивоенный плакат на заседании."},
+  {i:"alexei-nuriev",n:"Alexej Nurijev",ne:"Aleksei Nuriev",nr:"Нуриев Алексей",a:40,p:"Záchranář",pe:"Rescue worker",int:[],ie:[],s:"19 let",se:"19 years",d:"Zaměstnanec ministerstva pro mimořádné situace, 19 let.",de:"Emergency Ministry employee sentenced to 19 years.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Спасатель",sr:"19 лет",dr:"Сотрудник МЧС, приговорённый к 19 годам."},
   {i:"roman-nasryev",n:"Roman Nasryjev",ne:"Roman Nasryev",nr:"Насрыев Роман",a:31,p:"Policista",pe:"Police sergeant",int:[],ie:[],s:"19 let",se:"19 years",d:"Policejní seržant odsouzený společně s Nurijevem.",de:"Police sergeant convicted alongside Nuriev.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Полицейский",sr:"19 лет",dr:"Полицейский сержант, осуждённый по одному делу с Нуриевым."},
   {i:"eva-bagrova",n:"Eva Bagrova",ne:"Eva Bagrova",nr:"Багрова Ева",a:17,p:"Studentka",pe:"Student",int:[],ie:[],s:"4 roky",se:"4 years",d:"17letá studentka odsouzená k 4 rokům.",de:"17-year-old student sentenced to 4 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Студентка",sr:"4 лет",dr:"17-летняя студентка, приговорённая к 4 годам."},
   {i:"daniel-kholodny",n:"Daniel Kholodnyj",ne:"Daniel Kholodny",nr:"Холодный Даниэль",a:28,p:"IT specialista",pe:"IT specialist",int:["IT","Technologie","Programování"],ie:["IT","Technology","Programming"],s:"8 let",se:"8 years",d:"IT specialista odsouzený v kauze Navalného.",de:"IT specialist convicted in Navalny case.",ad:"172011, Тверская обл., г. Торжок, ул. Старицкая 79, ФКУ ИК-4",o:true,v:"https://vestochka.io/en/p/daniel-kholodny",g:"m",src:"gulag",pru:"IT-специалист",sr:"8 лет",dr:"IT-специалист, осуждённый по делу Навального."},
-  {i:"nadezhda-rossinskaya",n:"Naděžda Rossinskaja",ne:"Nadezhda Rossinskaya",nr:"Россинская Надежда",a:31,p:"Aktivistka",pe:"Activist",int:[],ie:[],s:"22 let",se:"22 years",d:"Jeden z nejdelších trestů mezi současnými politickými vězni.",de:"One of the longest sentences among current political prisoners.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Активистка",sr:"22 лет",dr:"Один из самых длительных сроков среди нынешних политзаключённых."},
-  {i:"bohdan-ziza",n:"Bohdan Ziza",ne:"Bogdan Ziza",nr:"Зиза Богдан",a:31,p:"Umělec",pe:"Artist",int:["Umění","Kultura"],ie:["Art","Culture"],s:"15 let",se:"15 years",d:"Ukrajinský umělec z Chersonu odsouzený za údajnou vlastizradu.",de:"Ukrainian artist from Kherson sentenced for alleged treason.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Художник",sr:"15 лет",dr:"Украинский художник из Херсона, осуждённый за якобы государственную измену."},
-  {i:"kristina-lyubashenko",n:"Kristina Ljubašenko",ne:"Kristina Lyubashenko",nr:"Любашенко Кристина",a:36,p:"Žena v domácnosti",pe:"Homemaker",int:[],ie:[],s:"12 let",se:"12 years",d:"Žena v domácnosti odsouzená k 12 letům.",de:"Homemaker sentenced to 12 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Домохозяйка",sr:"12 лет",dr:"Домохозяйка, приговорённая к 12 годам."},
-  {i:"ljudmila-razumova",n:"Ljudmila Razumova",ne:"Lyudmila Razumova",nr:"Разумова Людмила",a:59,p:"Umělkyně",pe:"Artist",int:["Umění","Malba"],ie:["Art","Painting"],s:"7 let",se:"7 years",d:"Umělkyně odsouzená k 7 letům.",de:"Artist sentenced to 7 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Художница",sr:"7 лет",dr:"Художница, приговорённая к 7 годам."},
-  {i:"mikhail-kriger",n:"Michail Kriger",ne:"Mikhail Kriger",nr:"Кригер Михаил",a:66,p:"Politický aktivista",pe:"Political activist",int:["Politika"],ie:["Politics"],s:"7 let",se:"7 years",d:"Dlouholetý politický aktivista.",de:"Long-time political activist.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Политический активист",sr:"7 лет",dr:"Многолетний политический активист."},
+  {i:"nadezhda-rossinskaya-nadin-geysler",n:"Naděžda Rossinskaja",ne:"Nadezhda Rossinskaya",nr:"Россинская Надежда",a:31,p:"Aktivistka",pe:"Activist",int:[],ie:[],s:"22 let",se:"22 years",d:"Jeden z nejdelších trestů mezi současnými politickými vězni.",de:"One of the longest sentences among current political prisoners.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Активистка",sr:"22 лет",dr:"Один из самых длительных сроков среди нынешних политзаключённых."},
+  {i:"bogdan-ziza",n:"Bohdan Ziza",ne:"Bogdan Ziza",nr:"Зиза Богдан",a:31,p:"Umělec",pe:"Artist",int:["Umění","Kultura"],ie:["Art","Culture"],s:"15 let",se:"15 years",d:"Ukrajinský umělec z Chersonu odsouzený za údajnou vlastizradu.",de:"Ukrainian artist from Kherson sentenced for alleged treason.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Художник",sr:"15 лет",dr:"Украинский художник из Херсона, осуждённый за якобы государственную измену."},
+  {i:"christina-lyubashenko",n:"Kristina Ljubašenko",ne:"Kristina Lyubashenko",nr:"Любашенко Кристина",a:36,p:"Žena v domácnosti",pe:"Homemaker",int:[],ie:[],s:"12 let",se:"12 years",d:"Žena v domácnosti odsouzená k 12 letům.",de:"Homemaker sentenced to 12 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Домохозяйка",sr:"12 лет",dr:"Домохозяйка, приговорённая к 12 годам."},
+  {i:"lyudmila-razumova",n:"Ljudmila Razumova",ne:"Lyudmila Razumova",nr:"Разумова Людмила",a:59,p:"Umělkyně",pe:"Artist",int:["Umění","Malba"],ie:["Art","Painting"],s:"7 let",se:"7 years",d:"Umělkyně odsouzená k 7 letům.",de:"Artist sentenced to 7 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Художница",sr:"7 лет",dr:"Художница, приговорённая к 7 годам."},
+  {i:"mikhail-krieger",n:"Michail Kriger",ne:"Mikhail Kriger",nr:"Кригер Михаил",a:66,p:"Politický aktivista",pe:"Political activist",int:["Politika"],ie:["Politics"],s:"7 let",se:"7 years",d:"Dlouholetý politický aktivista.",de:"Long-time political activist.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Политический активист",sr:"7 лет",dr:"Многолетний политический активист."},
   {i:"irina-danilovich",n:"Irina Danilovič",ne:"Irina Danilovich",nr:"Данилович Ирина",a:47,p:"Zdravotní sestra",pe:"Nurse, activist",int:["Zdravotnictví","Lidská práva"],ie:["Healthcare","Human rights"],s:"6 let 11 měs.",se:"6 years 11 months",d:"Zdravotní sestra z Krymu, obhajoba práv krymských Tatarů.",de:"Nurse from Crimea, defending Crimean Tatar rights.",ad:"",o:true,v:"",g:"f",src:"gulag",sr:"6 лет",dr:"Медсестра из Крыма, защищавшая права крымских татар."},
   {i:"igor-baryshnikov",n:"Igor Baryšnikov",ne:"Igor Baryshnikov",nr:"Барышников Игорь",a:67,p:"Důchodce",pe:"Retiree",int:[],ie:[],s:"7 let 6 měs.",se:"7 years 6 months",d:"67letý důchodce odsouzený za protiválečný postoj.",de:"67-year-old retiree convicted for anti-war stance.",ad:"",o:true,v:"",g:"m",src:"gulag",sr:"7 лет",dr:"67-летний пенсионер, осуждённый за антивоенную позицию."},
-  {i:"yevgenia-berkovich",n:"Jevgenija Berkovič",ne:"Yevgenia Berkovich",nr:"Беркович Евгения",a:41,p:"Režisérka, básnířka",pe:"Director, poet",int:["Divadlo","Literatura","Poezie"],ie:["Theatre","Literature","Poetry"],s:"5 let 6 měs.",se:"5 years 6 months",d:"Oceňovaná režisérka a básnířka. Odsouzena za divadelní hru o radikalizaci žen ISIS — hru přitom schválilo ministerstvo kultury. Zajímá se o divadlo, literaturu a poezii.",de:"Award-winning director and poet. Convicted for play about women radicalized by ISIS — the play was approved by the Ministry of Culture. Interested in theatre, literature, poetry.",ad:"",o:true,v:"",g:"f",src:"gulag",sr:"5 лет",dr:"Отмеченный наградами режиссёр и поэтесса. Осуждена за спектакль о радикализации женщин — одобренный Минкультуры. Увлекается театром, литературой, поэзией."},
+  {i:"evgenia-berkovich",n:"Jevgenija Berkovič",ne:"Yevgenia Berkovich",nr:"Беркович Евгения",a:41,p:"Režisérka, básnířka",pe:"Director, poet",int:["Divadlo","Literatura","Poezie"],ie:["Theatre","Literature","Poetry"],s:"5 let 6 měs.",se:"5 years 6 months",d:"Oceňovaná režisérka a básnířka. Odsouzena za divadelní hru o radikalizaci žen ISIS — hru přitom schválilo ministerstvo kultury. Zajímá se o divadlo, literaturu a poezii.",de:"Award-winning director and poet. Convicted for play about women radicalized by ISIS — the play was approved by the Ministry of Culture. Interested in theatre, literature, poetry.",ad:"",o:true,v:"",g:"f",src:"gulag",sr:"5 лет",dr:"Отмеченный наградами режиссёр и поэтесса. Осуждена за спектакль о радикализации женщин — одобренный Минкультуры. Увлекается театром, литературой, поэзией."},
   {i:"azat-miftakhov",n:"Azat Miftachov",ne:"Azat Miftakhov",nr:"Мифтахов Азат",a:33,p:"Matematik",pe:"Mathematician",int:["Matematika","Věda"],ie:["Mathematics","Science"],s:"4 roky",se:"4 years",d:"Talentovaný matematik odsouzený za aktivismus.",de:"Talented mathematician convicted for activism.",ad:"",o:true,v:"",g:"m",src:"gulag",sr:"4 лет",dr:"Талантливый математик, осуждённый за активизм."},
   {i:"nadezhda-buyanova",n:"Naděžda Bujanova",ne:"Nadezhda Buyanova",nr:"Буянова Надежда",a:70,p:"Pediatrička",pe:"Pediatrician",int:["Medicína","Pediatrie"],ie:["Medicine","Pediatrics"],s:"5 let 6 měs.",se:"5 years 6 months",d:"70letá pediatrička z Moskvy. Obviněna na základě udání matky pacienta — údajně řekla něco kritického o válce. OSN vyzvalo k jejímu propuštění. Celý život léčila děti.",de:"70-year-old Moscow pediatrician. Charged based on patient mother's report — allegedly said something critical about the war. UN called for her release. Spent her life treating children.",ad:"",o:true,v:"",g:"f",src:"gulag",sr:"5 лет",dr:"70-летний московский педиатр. Обвинена на основании заявления матери пациента — якобы критически высказалась о войне. ООН призвала к её освобождению. Всю жизнь лечила детей."},
   {i:"nikita-uvarov",n:"Nikita Uvarov",ne:"Nikita Uvarov",nr:"Уваров Никита",a:20,p:"Student",pe:"Student",int:["Vzdělávání"],ie:["Education"],s:"5 let",se:"5 years",d:"Zadržen jako 14letý v sibiřském Kansku. S kamarády postavil maketu budovy FSB z krabic a zapálili ji. Jeden z nejmladších politických vězňů v moderním Rusku.",de:"Detained at 14 in Siberian Kansk. Built cardboard model of FSB building with friends and set it on fire. One of youngest political prisoners in modern Russia.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 14 лет в сибирском Канске. Вместе с друзьями построил макет здания ФСБ из коробок и поджёг его. Один из самых молодых политзаключённых современной России."},
   {i:"nina-slobodchikova",n:"Nina Slobodčikova",ne:"Nina Slobodchikova",nr:"Слободчикова Нина",a:39,p:"Programátorka",pe:"Programmer",int:["IT","Programování"],ie:["IT","Programming"],s:"12 let",se:"12 years",d:"Programátorka odsouzená za údajné financování terorismu.",de:"Programmer convicted of alleged terrorism financing.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Программистка",sr:"12 лет",dr:"Программистка, осуждённая за якобы финансирование терроризма."},
   {i:"emir-usein-kuku",n:"Emir Usein Kuku",ne:"Emir Usein Kuku",nr:"Эмир Усеин Куку",a:49,p:"Aktivista",pe:"HR activist",int:["Lidská práva"],ie:["Human rights"],s:"12 let",se:"12 years",d:"Krymsko-tatarský lidskoprávní aktivista.",de:"Crimean Tatar human rights activist.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Активист",sr:"12 лет",dr:"Крымскотатарский правозащитник."},
   {i:"natalija-vlasova",n:"Natalija Vlasova",ne:"Nataliya Vlasova",nr:"Власова Наталья",a:44,p:"Ukrajinka",pe:"Ukrainian",int:[],ie:[],s:"18 let",se:"18 years",d:"Ukrajinská civilistka odsouzená k 18 letům.",de:"Ukrainian civilian sentenced to 18 years.",ad:"",o:false,v:"",g:"f",src:"gulag",pru:"Украинка",sr:"18 лет",dr:"Украинская гражданская, приговорённая к 18 годам."},
-  {i:"artyom-kriger",n:"Arťom Kriger",ne:"Artyom Kriger",nr:"Кригер Артём",a:25,p:"Novinář",pe:"Journalist",int:["Žurnalistika"],ie:["Journalism"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Novinář odsouzený za údajnou spolupráci s FBK.",de:"Journalist convicted for alleged collaboration with FBK.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Журналист",sr:"5 лет",dr:"Журналист, осуждённый за якобы сотрудничество с ФБК."},
+  {i:"artem-kriger",n:"Arťom Kriger",ne:"Artyom Kriger",nr:"Кригер Артём",a:25,p:"Novinář",pe:"Journalist",int:["Žurnalistika"],ie:["Journalism"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Novinář odsouzený za údajnou spolupráci s FBK.",de:"Journalist convicted for alleged collaboration with FBK.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Журналист",sr:"5 лет",dr:"Журналист, осуждённый за якобы сотрудничество с ФБК."},
   {i:"irina-gorobtsova",n:"Irina Gorobcova",ne:"Irina Gorobtsova",nr:"Горобцова Ирина",a:41,p:"Programátorka",pe:"Programmer",int:["IT","Aktivismus"],ie:["IT","Activism"],s:"10 let 5 měs.",se:"10 years 5 months",d:"Programátorka a aktivistka odsouzená k více než 10 letům.",de:"Programmer and activist sentenced to over 10 years.",ad:"",o:true,v:"",g:"f",src:"gulag",pru:"Программистка",sr:"10 лет",dr:"Программистка и активистка, приговорённая к более чем 10 годам."},
   {i:"danila-bagrov",n:"Danila Bagrov",ne:"Danila Bagrov",nr:"Багров Данила",a:19,p:"Automechanik",pe:"Auto mechanic",int:["Auta"],ie:["Cars"],s:"9 let",se:"9 years",d:"19letý automechanik odsouzený k 9 letům.",de:"19-year-old auto mechanic sentenced to 9 years.",ad:"",o:true,v:"",g:"m",src:"gulag",sr:"9 лет",dr:"19-летний автомеханик, приговорённый к 9 годам."},
-  {i:"oleksandr-marchenko",n:"Oleksandr Marčenko",ne:"Oleksandr Marchenko",nr:"Марченко Александр",a:54,p:"Podnikatel",pe:"Businessman",int:["Podnikání"],ie:["Business"],s:"10 let",se:"10 years",d:"Ukrajinský podnikatel odsouzený k 10 letům.",de:"Ukrainian businessman sentenced to 10 years.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Предприниматель",sr:"10 лет",dr:"Украинский предприниматель, приговорённый к 10 годам."},
+  {i:"alexander-marchenko",n:"Oleksandr Marčenko",ne:"Oleksandr Marchenko",nr:"Марченко Александр",a:54,p:"Podnikatel",pe:"Businessman",int:["Podnikání"],ie:["Business"],s:"10 let",se:"10 years",d:"Ukrajinský podnikatel odsouzený k 10 letům.",de:"Ukrainian businessman sentenced to 10 years.",ad:"",o:true,v:"",g:"m",src:"gulag",pru:"Предприниматель",sr:"10 лет",dr:"Украинский предприниматель, приговорённый к 10 годам."},
   {i:"anna-jeltsova",n:"Anna Jelcova",ne:"Anna Yeltsova",nr:"Ельцова Анна",a:24,p:"Studentka",pe:"Student",int:["Vzdělávání"],ie:["Education"],s:"10 let",se:"10 years",d:"Ukrajinská studentka odsouzená k 10 letům.",de:"Ukrainian student sentenced to 10 years.",ad:"",o:false,v:"",g:"f",src:"gulag",pru:"Студентка",sr:"10 лет",dr:"Украинская студентка, приговорённая к 10 годам."},
-  {i:"alexei-moskaljov",n:"Alexej Moskaljov",ne:"Aleksei Moskalyov",nr:"Москалёв Алексей",a:55,p:"Podnikatel",pe:"Businessman",int:["Rodina"],ie:["Family"],s:"Propuštěn 10/2024",se:"Released 10/2024",d:"Otec odsouzený za protiválečnou kresbu jeho dcery. Propuštěn.",de:"Father convicted for his daughter's anti-war drawing. Released.",ad:"",o:false,v:"",g:"m",src:"gulag",pru:"Предприниматель",sr:"Освобождён 10/2024",dr:"Отец, осуждённый из-за антивоенного рисунка дочери. Освобождён."},
   {i:"solim-kamina",n:"Solim Kamina",ne:"Solim Kamina",nr:"Камина Солим",a:50,p:"Moskvan",pe:"Moscow resident",int:[],ie:[],s:"Vazba",se:"Custody",d:"Zadržen po razii doma, obviněn ze šíření nepravd o armádě. Při zadržení na něj byla použita paralyzující zbraň.",de:"Detained after home raid, charged with spreading false army info. Taser used during arrest.",ad:"",o:true,v:"https://vestochka.io/en/p/solim-kamina",g:"m",src:"vestochka",pru:"Москвич",sr:"Под стражей",dr:"Задержан после обыска дома, обвинён в распространении ложной информации об армии. При задержании применён электрошокер."},
   {i:"aleksei-petrov",n:"Alexej Petrov",ne:"Aleksei Petrov",nr:"Петров Алексей",a:53,p:"IT technik",pe:"IT technician",int:["IT","Technologie"],ie:["IT","Technology"],s:"Vazba",se:"Custody",d:"Obviněn z výzev k terorismu za sarkastický komentář o Putinovi na internetu.",de:"Charged with calls to terrorism for sarcastic online comment about Putin.",ad:"",o:true,v:"https://vestochka.io/en/p/aleksei-petrov",g:"m",src:"vestochka",pru:"IT-техник",sr:"Под стражей",dr:"Обвинён в призывах к терроризму за саркастический комментарий о Путине в интернете."},
   {i:"aleksandr-skobov",n:"Alexandr Skobov",ne:"Aleksandr Skobov",nr:"Скобов Александр",a:67,p:"Publicista, disident",pe:"Publicist, dissident",int:["Politika","Historie","Literatura"],ie:["Politics","History","Literature"],s:"Vazba",se:"Custody",d:"Sovětský disident, politický vězeň už za SSSR. Znovu zadržen v 2024 za ospravedlňování terorismu.",de:"Soviet-era dissident, political prisoner under USSR. Re-arrested in 2024 for justifying terrorism.",ad:"",o:true,v:"https://vestochka.io/en/p/aleksandr-skobov",g:"m",src:"vestochka",pru:"Публицист, диссидент",sr:"Под стражей",dr:"Диссидент советской эпохи, политзаключённый ещё при СССР. Вновь арестован в 2024 году за «оправдание терроризма»."},
@@ -46,29 +45,63 @@ const P = [
   {i:"kirill-bunin",n:"Kirill Bunin",ne:"Kirill Bunin",nr:"Бунин Кирилл",a:33,p:"Aktivista StopHam",pe:"StopHam activist",int:["Aktivismus","Doprava"],ie:["Activism","Transport"],s:"6 let",se:"6 years",d:"Aktivista hnutí StopHam (proti nelegálnímu parkování), odsouzený po konfliktu s policisty.",de:"StopHam (anti-illegal parking) activist convicted after conflict with police.",ad:"",o:true,v:"https://vestochka.io/en/p/kirill-bunin",g:"m",src:"vestochka",pru:"Активист «СтопХам»",sr:"6 лет",dr:"Активист движения «СтопХам», осуждённый после конфликта с полицией."},
   {i:"sergei-karelin",n:"Sergej Karelin",ne:"Sergei Karelin",nr:"Карелин Сергей",a:36,p:"Novinář",pe:"Journalist",int:["Žurnalistika","Fotografie"],ie:["Journalism","Photography"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Novinář odsouzený spolu s Favorskou za údajnou spolupráci s FBK.",de:"Journalist convicted alongside Favorskaya for alleged FBK collaboration.",ad:"",o:true,v:"",g:"m",src:"vestochka",pru:"Журналист",sr:"5 лет",dr:"Журналист, осуждённый вместе с Фаворской за якобы сотрудничество с ФБК."},
   {i:"konstantin-gabov",n:"Konstantin Gabov",ne:"Konstantin Gabov",nr:"Габов Константин",a:35,p:"Novinář (Reuters)",pe:"Journalist (Reuters)",int:["Žurnalistika"],ie:["Journalism"],s:"5 let 5 měs.",se:"5 years 5 months",d:"Bývalý kameraman Reuters odsouzený za údajnou spolupráci s FBK.",de:"Former Reuters cameraman convicted for alleged FBK collaboration.",ad:"",o:true,v:"",g:"m",src:"vestochka",sr:"5 лет",dr:"Бывший оператор Reuters, осуждённый за якобы сотрудничество с ФБК."},
-  {i:"svetlana-petriychuk",n:"Světlana Petrijčuk",ne:"Svetlana Petriychuk",nr:"Петрийчук Светлана",a:45,p:"Dramatička",pe:"Playwright",int:["Divadlo","Drama","Literatura"],ie:["Theatre","Drama","Literature"],s:"6 let",se:"6 years",d:"Dramatička odsouzená spolu s Berkovičovou za divadelní hru o radikalizaci.",de:"Playwright convicted alongside Berkovich for a play about radicalization.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Драматург",sr:"6 лет",dr:"Драматург, осуждённая вместе с Беркович за спектакль о радикализации."},
-  {i:"aleksandra-skochilenko",n:"Alexandra Skočilenko",ne:"Aleksandra Skochilenko",nr:"Скочиленко Александра",a:33,p:"Umělkyně, muzikantka",pe:"Artist, musician",int:["Umění","Hudba","Aktivismus"],ie:["Art","Music","Activism"],s:"7 let",se:"7 years",d:"Umělkyně a muzikantka z Petrohradu. Odsouzena k 7 letům za výměnu cenovek v supermarketu za protiválečné vzkazy. Trpí celiakií, zdravotní stav se ve vazbě zhoršil.",de:"Artist and musician from St. Petersburg. Sentenced to 7 years for replacing price tags with anti-war messages. Suffers from celiac disease, health worsened in detention.",ad:"",o:true,v:"",g:"f",src:"vestochka",sr:"7 лет",dr:"Художница и музыкант из Санкт-Петербурга. Приговорена к 7 годам за замену ценников в магазине на антивоенные листовки. Страдает целиакией, здоровье ухудшилось в заключении."},
+  {i:"svetlana-petriichuk",n:"Světlana Petrijčuk",ne:"Svetlana Petriychuk",nr:"Петрийчук Светлана",a:45,p:"Dramatička",pe:"Playwright",int:["Divadlo","Drama","Literatura"],ie:["Theatre","Drama","Literature"],s:"6 let",se:"6 years",d:"Dramatička odsouzená spolu s Berkovičovou za divadelní hru o radikalizaci.",de:"Playwright convicted alongside Berkovich for a play about radicalization.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Драматург",sr:"6 лет",dr:"Драматург, осуждённая вместе с Беркович за спектакль о радикализации."},
   {i:"mikhail-afanasiev",n:"Michail Afanasjev",ne:"Mikhail Afanasiev",nr:"Афанасьев Михаил",a:55,p:"Novinář",pe:"Journalist",int:["Žurnalistika","Média"],ie:["Journalism","Media"],s:"5,5 let",se:"5.5 years",d:"Novinář z Chakasie odsouzený za šíření údajných nepravd o armádě.",de:"Journalist from Khakassia convicted for spreading alleged false info about the army.",ad:"",o:true,v:"https://vestochka.io/en/p/mikhail-afanasiev",g:"m",src:"vestochka",pru:"Журналист",sr:"5,5 лет",dr:"Журналист из Хакасии, осуждённый за распространение якобы ложной информации об армии."},
   {i:"oleksij-demjanenko",n:"Oleksij Děmjaněnko",ne:"Oleksii Demianenko",nr:"Демьяненко Олексій",a:48,p:"Ukrajinský civilista",pe:"Ukrainian civilian",int:[],ie:[],s:"Vazba",se:"Custody",d:"Ukrajinský civilista, otec zadržený spolu s dcerou Anželikou na okupovaném území.",de:"Ukrainian civilian, father detained with daughter Anzhelika in occupied territory.",ad:"",o:true,v:"",g:"m",src:"gulag",sr:"Под стражей",dr:"Украинский гражданский, отец, задержанный вместе с дочерью Анжеликой на оккупированной территории."},
   {i:"anzelika-demjanenko",n:"Anželika Děmjaněnko",ne:"Anzhelika Demianenko",nr:"Демьяненко Анжеліка",a:22,p:"Ukrajinka",pe:"Ukrainian",int:[],ie:[],s:"Vazba",se:"Custody",d:"22letá Ukrajinka zadržená spolu s otcem na okupovaném území.",de:"22-year-old Ukrainian detained with her father in occupied territory.",ad:"",o:false,v:"",g:"f",src:"gulag",pru:"Украинка",sr:"Под стражей",dr:"22-летняя украинка, задержанная вместе с отцом на оккупированной территории."},
-  {i:"maria-ponomarenko",n:"Maria Ponomarenko",ne:"Maria Ponomarenko",nr:"Пономаренко Мария",a:46,p:"Novinářka",pe:"Journalist",int:["Žurnalistika"],ie:["Journalism"],s:"6 let",se:"6 years",d:"Novinářka odsouzená za sdílení informací o bombardování divadla v Mariupolu.",de:"Journalist convicted for sharing information about Mariupol theatre bombing.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Журналистка",sr:"6 лет",dr:"Журналистка, осуждённая за распространение информации о бомбардировке театра в Мариуполе."},
-  {i:"lilia-chanysheva",n:"Lilja Čanyševa",ne:"Lilia Chanysheva",nr:"Чанышева Лилия",a:43,p:"Aktivistka",pe:"Activist",int:["Politika","Aktivismus"],ie:["Politics","Activism"],s:"7,5 let",se:"7.5 years",d:"Bývalá koordinátorka Navalného štábu v Ufe. Jedna z prvních odsouzených v kauze extremistické komunity.",de:"Former coordinator of Navalny's HQ in Ufa. One of the first convicted in extremist community case.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Активистка",sr:"7,5 лет",dr:"Бывший координатор штаба Навального в Уфе. Одна из первых осуждённых по делу об экстремистском сообществе."},
-  {i:"ksenia-fadeyeva",n:"Ksenija Fadějevová",ne:"Ksenia Fadeyeva",nr:"Фадеева Ксения",a:33,p:"Zastupitelka",pe:"Deputy",int:["Politika"],ie:["Politics"],s:"9 let",se:"9 years",d:"Městská zastupitelka z Tomsku, odsouzená za organizaci Navalného štábu.",de:"Municipal deputy from Tomsk, convicted for organizing Navalny's HQ.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Депутат",sr:"9 лет",dr:"Муниципальный депутат из Томска, осуждённая за организацию штаба Навального."},
+  {i:"mariia-ponomarenko",n:"Maria Ponomarenko",ne:"Maria Ponomarenko",nr:"Пономаренко Мария",a:46,p:"Novinářka",pe:"Journalist",int:["Žurnalistika"],ie:["Journalism"],s:"6 let",se:"6 years",d:"Novinářka odsouzená za sdílení informací o bombardování divadla v Mariupolu.",de:"Journalist convicted for sharing information about Mariupol theatre bombing.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Журналистка",sr:"6 лет",dr:"Журналистка, осуждённая за распространение информации о бомбардировке театра в Мариуполе."},
   {i:"dmitry-ivanov",n:"Dmitrij Ivanov",ne:"Dmitry Ivanov",nr:"Иванов Дмитрий",a:30,p:"Dělník",pe:"Worker",int:["Sport","Cvičení"],ie:["Sports","Fitness"],s:"8,5 let",se:"8.5 years",d:"Odsouzený za příspěvky na sociálních sítích kritizující válku.",de:"Convicted for social media posts criticizing the war.",ad:"",o:true,v:"",g:"m",src:"vestochka",pru:"Рабочий",sr:"8,5 лет",dr:"Осуждён за публикации в соцсетях с критикой войны."},
-  {i:"oleg-orlov",n:"Oleg Orlov",ne:"Oleg Orlov",nr:"Орлов Олег",a:71,p:"Lidskoprávní aktivista",pe:"HR activist",int:["Lidská práva","Memorial","Historie"],ie:["Human rights","Memorial","History"],s:"Propuštěn 08/2024",se:"Released 08/2024",d:"Spoluzakladatel Memorialu, propuštěn v rámci výměny vězňů. Ikona lidskoprávního hnutí.",de:"Memorial co-founder, released in prisoner exchange. Icon of human rights movement.",ad:"",o:false,v:"",g:"m",src:"gulag",pru:"Правозащитник",sr:"Освобождён 08/2024",dr:"Сооснователь «Мемориала», освобождён в рамках обмена заключёнными. Символ правозащитного движения."},
-  {i:"darja-kozyreva",n:"Darja Kozyreva",ne:"Darya Kozyreva",nr:"Козырева Дарья",a:22,p:"Studentka",pe:"Student",int:["Vzdělávání","Poezie"],ie:["Education","Poetry"],s:"Propuštěna 03/2026",se:"Released 03/2026",d:"Studentka medicíny vyloučená za protiválečný postoj. Odsouzena za báseň. Propuštěna.",de:"Med student expelled for anti-war stance. Convicted for a poem. Released 2026.",ad:"",o:false,v:"",g:"f",src:"vestochka",pru:"Студентка",sr:"Освобождён 03/2026",dr:"Студентка-медик, отчисленная за антивоенную позицию. Осуждена за стихотворение. Освобождена в 2026 году."}
+  {i:"daria-kozyreva",n:"Darja Kozyreva",ne:"Darya Kozyreva",nr:"Козырева Дарья",a:22,p:"Studentka",pe:"Student",int:["Vzdělávání","Poezie"],ie:["Education","Poetry"],s:"2 roky a 8 měsíců",se:"2 years 8 months",d:"Studentka medicíny vyloučená za protiválečný postoj. Odsouzena za báseň.",de:"Med student expelled for anti-war stance. Convicted for a poem.",ad:"",o:true,v:"",g:"f",src:"vestochka",pru:"Студентка",sr:"2 года 8 месяцев",dr:"Студентка-медик, отчисленная за антивоенную позицию. Осуждена за стихотворение."}
 ];
 
-const SYN={sport:["fotbal","football"],náboženství:["spiritualita","spirituality","křesťanství","christianity","víra","faith"],religion:["spirituality","christianity","faith"],umění:["umění","art","malba","painting","kultura","culture","divadlo","theatre","film","cinema","poezie","poetry","literatura","literature","hudba","music"],art:["art","painting","culture","theatre","cinema","poetry","literature","music"],tech:["it","technologie","technology","programování","programming"],počítač:["it","technologie","technology","programování","programming"],computer:["it","technology","programming"],věda:["matematika","mathematics","věda","science","fyzika","physics","medicína","medicine"],science:["mathematics","science","physics","medicine"],právo:["právo","law","politika","politics","lidská práva","human rights"],law:["law","politics","human rights"],média:["žurnalistika","journalism","fotografie","photography","film","cinema","média","media"],media:["journalism","photography","cinema"],příroda:["příroda","nature","spiritualita"],nature:["nature","spirituality"],kultura:["kultura","culture","divadlo","theatre","literatura","literature","poezie","poetry","umění","art","drama","hudba","music"],culture:["culture","theatre","literature","poetry","art","drama","music"],ukrajina:["ukrajinka","ukrainian","ukrajinský","civilista"],ukraine:["ukrainian","civilian"],krym:["krym","crimea","tatarů","tatar","krymsk"],crimea:["crimea","tatar","crimean"],mladí:["student","studentka","lyceum"],young:["student","lyceum"],důchodce:["důchodce","důchodkyně","retiree"],senior:["retiree"],historie:["historie","history","archeologie","archaeology","paměť","memory"],history:["history","archaeology","memory"],novinář:["novinář","novinářka","žurnalistika","journalism","journalist"],journalist:["journalist","journalism"]};
+// Search: every query word must match the start of a word in any language version of the profile,
+// directly or through one of its synonyms (word starts, so "art" matches "artist" but not "party")
+const SYN={
+  sport:["sport","fotbal","football","спорт","athlete"],
+  náboženství:["spiritualit","spirituality","křesťan","christian","víra","faith","relig","duchovní","свидет","witness","религ","верующ","мусульм","muslim","islam","христиан","свящ","priest"],
+  religion:["spirituality","christian","faith","relig","witness","muslim","islam","priest","свидет","религ","верующ"],
+  umění:["umění","uměl","art","malb","painting","kultur","culture","divadl","theatr","film","cinema","poez","poet","literat","hudb","music","худож","искусств","музык","поэт","театр","режисс"],
+  art:["art","painting","culture","theatr","cinema","poet","literat","music","худож","искусств","музык","поэт","театр"],
+  tech:["it","technolog","programov","programm","software","developer","инженер","программ","айти"],
+  počítač:["it","technolog","programov","programm","software","программ"],
+  computer:["it","technolog","programm","software","программ"],
+  věda:["matemat","mathemat","věd","scien","fyzi","physic","medic","учён","учен","науч","математ","физик","врач"],
+  science:["mathemat","scien","physic","medic","учён","учен","науч","математ"],
+  právo:["práv","law","advok","attorney","политик","юрист","адвокат","правозащит","human rights","lidská práva"],
+  law:["law","attorney","human rights","юрист","адвокат","правозащит"],
+  média:["žurnal","novin","journal","fotograf","photograph","film","média","media","blog","журналист","блог","редакт","корреспонд"],
+  media:["journal","photograph","cinema","blog","журналист","блог","корреспонд"],
+  příroda:["přírod","nature","spiritualit","природ","эколог","ecolog","животн","animal"],
+  nature:["nature","spiritualit","ecolog","animal","природ","эколог"],
+  kultura:["kultur","culture","divadl","theatr","literat","poez","poet","umění","art","drama","hudb","music","театр","поэт","музык","искусств"],
+  culture:["culture","theatr","literat","poet","art","drama","music","театр","поэт","музык","искусств"],
+  ukrajina:["ukrajin","ukrain","civilist","civilian","украин"],
+  ukraine:["ukrain","civilian","украин"],
+  krym:["krym","crimea","tatar","крым","татар"],
+  crimea:["crimea","tatar","крым","татар"],
+  mladí:["student","lyce","школьн","студент"],
+  young:["student","lyce","школьн","студент"],
+  důchodce:["důchod","retire","пенсион"],
+  senior:["retire","důchod","пенсион"],
+  historie:["histor","archeolog","archaeolog","paměť","memory","истор","археолог","мемориал"],
+  history:["histor","archaeolog","memory","истор","археолог"],
+  novinář:["novinář","žurnal","journal","журналист"],
+  journalist:["journal","журналист"],
+};
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const wordStart=(h,w)=>new RegExp("(^|[^\\p{L}\\p{N}])"+escRe(w),"u").test(h);
 
-function fz(q,p,cs){
+function fz(q,p){
   if(!q.trim())return true;
   const ws=q.toLowerCase().trim().split(/\s+/);
-  const h=[(cs?p.n:p.ne),(cs?p.p:p.pe),(_lang==="cs"?p.int:p.ie).join(" "),(cs?p.d:p.de),p.c||""].join(" ").toLowerCase();
+  const tags=[p.n,p.ne,p.nr,p.p,p.pe,p.pru,(p.int||[]).join(" "),(p.ie||[]).join(" "),p.c,p.cc,p.cr].filter(Boolean).join(" ").toLowerCase();
+  const h=tags+" "+[p.d,p.de,p.dr].filter(Boolean).join(" ").toLowerCase();
+  // very short words ("it") only as a whole word in names, occupations and interests, never inside descriptions
+  const hit=w=>w.length<=2?new RegExp("(^|[^\\p{L}\\p{N}])"+escRe(w)+"($|[^\\p{L}\\p{N}])","u").test(tags):wordStart(h,w);
   return ws.every(w=>{
-    if(h.includes(w))return true;
-    const ex=SYN[w];if(ex&&ex.some(s=>h.includes(s)))return true;
-    for(const[k,vs]of Object.entries(SYN)){if((k.startsWith(w)||w.startsWith(k))&&vs.some(s=>h.includes(s)))return true;}
+    if(hit(w))return true;
+    const ex=SYN[w];if(ex&&ex.some(hit))return true;
+    for(const[k,vs]of Object.entries(SYN)){if((k.startsWith(w)||w.startsWith(k))&&vs.some(hit))return true;}
     return false;
   });
 }
@@ -118,6 +151,101 @@ const cleanLetter = (s) => {
   return out.trim();
 };
 
+// ---------- prisoners ----------
+// The full, current list comes from /api/prisoners (OVD-Info, see netlify/functions/prisoners.mjs).
+// P above is the hand-written overlay from Gulag.cz (Czech texts, occupations, interests), see mergePrisoners.
+// Entries of P that OVD-Info does not list (src "gulag") are kept at the end of the list.
+// If the API is unavailable, the app falls back to P.
+const CUR = Object.fromEntries(P.map(p => [p.i, p]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const mergePrisoners = (api) => {
+  const cur = [], rest = [], seen = new Set();
+  for (const a of api) {
+    if (seen.has(a.i)) continue;
+    seen.add(a.i);
+    const c = CUR[a.i];
+    if (!c) { rest.push(a); continue; }
+    // Facts (age, sentence, address, EN/RU description) always from OVD-Info; Czech text, occupation and interests from Gulag.cz
+    cur.push({ ...a, n: c.n || a.n, p: c.p || a.p, pe: c.pe || a.pe, pru: c.pru || a.pru, d: c.d || "", de: a.de || c.de, dr: a.dr || c.dr, int: c.int || [], ie: c.ie || [] });
+  }
+  const extra = P.filter(c => !seen.has(c.i) && c.src === "gulag");
+  // Prisoners with Gulag.cz texts first, the rest in random order so that letters spread across everyone
+  return [...cur, ...shuffle(rest), ...extra];
+};
+const nm = p => _lang === "cs" ? p.n : _lang === "ru" ? (p.nr || p.ne) : p.ne;
+const prof = p => _lang === "cs" ? p.p : _lang === "ru" ? (p.pru || p.pe) : p.pe;
+const city = p => _lang === "ru" ? (p.cr || p.c) : _lang === "cs" ? (p.cc || p.c) : p.c;
+const ageLbl = a => {
+  if (a == null) return "";
+  if (_lang === "cs") return a + " let";
+  if (_lang === "en") return a + " yo";
+  const m10 = a % 10, m100 = a % 100;
+  return a + (m10 === 1 && m100 !== 11 ? " год" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? " года" : " лет");
+};
+const meta = (p, withCity) => [ageLbl(p.a), prof(p), withCity && city(p)].filter(Boolean).join(" · ");
+const photo = (p, size) => p.ph ? p.ph + "/" + size : "";
+const vestUrl = p => p.src === "ovd" ? "https://vestochka.io/" + (_lang === "ru" ? "" : "en/") + "p/" + p.i + "/" : (p.v || "");
+// Description in the current language; cz = machine translation for prisoners without a Gulag.cz text
+const desc = (p, cz) => _lang === "cs" ? (p.d || cz || "") : _lang === "ru" ? (p.dr || p.de) : (p.de || p.dr);
+
+function Avatar({ p, size, variant, dark }) {
+  const [bad, setBad] = useState(false);
+  const src = photo(p, variant || "thumb");
+  if (src && !bad) return <img src={src} alt="" loading="lazy" onError={() => setBad(true)} className={size + " rounded-full object-cover flex-shrink-0 " + (dark ? "bg-stone-700" : "bg-stone-200")} />;
+  return <div className={size + " rounded-full flex items-center justify-center font-bold flex-shrink-0 " + (dark ? "bg-stone-700" : "bg-stone-200 text-stone-500")} style={{ fontFamily: "system-ui" }}>{(nm(p) || "?").charAt(0)}</div>;
+}
+
+// Description paragraph; in Czech shows the machine translation (marked) or, while it loads / if it fails, the English text
+function PrisonerDesc({ p, cz, busy, fail, className }) {
+  const txt = desc(p, cz);
+  if (_lang === "cs" && !txt) {
+    if (busy) return <p className={className + " text-stone-400 italic"}>Překládám popis z ruštiny…</p>;
+    if (p.de) return <p className={className}>{p.de} <span className="text-[10px] text-stone-400" style={{ fontFamily: "system-ui" }}>({fail ? "anglicky – překlad se nepodařil" : "anglicky"})</span></p>;
+    return null;
+  }
+  if (!txt) return null;
+  return <p className={className}>{txt}{_lang === "cs" && !p.d && cz && <span className="block text-[10px] text-stone-400 mt-1" style={{ fontFamily: "system-ui" }}>Automatický překlad popisu z OVD-Info</span>}</p>;
+}
+
+// Czech translations of OVD-Info descriptions, cached in the browser (keyed by the profile's update time)
+const CS_KEY = "dopisy-nadeje-cs";
+const readCs = () => { try { return JSON.parse(localStorage.getItem(CS_KEY) || "{}"); } catch (e) { return {}; } };
+const cachedCs = (p, cache) => p.d || (cache[p.i] && cache[p.i].u === p.u ? cache[p.i].d : "");
+async function csDescs(prs) {
+  const cache = readCs();
+  const need = prs.filter(p => !cachedCs(p, cache) && p.dr);
+  if (need.length) {
+    const r = await ai("server-managed", sD, JSON.stringify(Object.fromEntries(need.map(p => [p.i, p.dr]))));
+    const j = JSON.parse(extractTag(r, "json").replace(/```json|```/g, "").trim());
+    for (const p of need) if (typeof j[p.i] === "string" && j[p.i].trim()) cache[p.i] = { u: p.u, d: j[p.i].trim() };
+    try {
+      const ks = Object.keys(cache);
+      for (const k of ks.slice(0, Math.max(0, ks.length - 300))) delete cache[k];
+      localStorage.setItem(CS_KEY, JSON.stringify(cache));
+    } catch (e) {}
+  }
+  return Object.fromEntries(prs.map(p => [p.i, cachedCs(p, cache)]));
+}
+function useCsDesc(prs, lang) {
+  const ids = prs.map(p => p.i).join(",");
+  const [m, setM] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState(false);
+  useEffect(() => {
+    if (lang !== "cs" || !prs.length) return;
+    const cache = readCs();
+    setM(Object.fromEntries(prs.map(p => [p.i, cachedCs(p, cache)])));
+    setFail(false);
+    setBusy(false);
+    if (prs.every(p => cachedCs(p, cache) || !p.dr)) return;
+    let off = false;
+    setBusy(true);
+    csDescs(prs).then(r => { if (!off) setM(r); }).catch(() => { if (!off) setFail(true); }).finally(() => { if (!off) setBusy(false); });
+    return () => { off = true; };
+  }, [ids, lang]);
+  return { m, busy, fail };
+}
+
 export default function App(){
   const [lang,setLang]=useState("cs");
   const [scr,setScr]=useState("home");
@@ -126,6 +254,15 @@ export default function App(){
   const [letters,setLetters]=useState(()=>{try{const s=localStorage.getItem("dopisy-nadeje-letters");return s?JSON.parse(s):[];}catch(e){return[];}});
   useEffect(()=>{try{localStorage.setItem("dopisy-nadeje-letters",JSON.stringify(letters));}catch(e){}},[letters]);
   const [composeBack,setComposeBack]=useState("home");
+  const [list,setList]=useState(P);
+  const [live,setLive]=useState(null); // null = loading, true = current OVD-Info data, false = fallback to P
+  useEffect(()=>{
+    let off=false;
+    fetch("/api/prisoners").then(r=>r.ok?r.json():Promise.reject(new Error("HTTP "+r.status)))
+      .then(j=>{if(off)return;if(!Array.isArray(j.prisoners)||!j.prisoners.length)throw new Error("empty");setList(mergePrisoners(j.prisoners));setLive(true);})
+      .catch(()=>{if(!off)setLive(false);});
+    return()=>{off=true;};
+  },[]);
   const cs=lang==="cs";
   const ru=lang==="ru";
   _lang=lang;
@@ -134,6 +271,7 @@ export default function App(){
   const addLetter=(pr,txt,dt)=>setLetters(prev=>[{pr,txt,dt:dt||new Date().toLocaleDateString()},...prev]);
   const removeLetter=(idx)=>setLetters(prev=>prev.filter((_,i)=>i!==idx));
   const goCompose=(p,from)=>{setSel(p);setComposeBack(from);setScr("compose");};
+  useEffect(()=>{try{window.scrollTo(0,0);}catch(e){}},[scr,sel]);
 
   return(
     <div className="min-h-screen bg-stone-100 text-stone-900 flex flex-col" style={{fontFamily:"Georgia,serif",backgroundColor:"#f5f4f0"}}>
@@ -152,12 +290,12 @@ export default function App(){
       </nav>
 
       <div className="flex-1 flex flex-col">
-        {scr==="home"&&<Home cs={cs} go={m=>setScr(m)} pickRandom={p=>goCompose(p,"home")}/>}
-        {scr==="choose"&&<Choose cs={cs} lang={lang} back={home} pick={p=>goCompose(p,"choose")}/>}
-        {scr==="match"&&<Match cs={cs} lang={lang} apiKey={key} back={home} pick={p=>goCompose(p,"match")} needKey={()=>{}}/>}
+        {scr==="home"&&<Home cs={cs} list={list} go={m=>setScr(m)} pickRandom={p=>goCompose(p,"home")}/>}
+        {scr==="choose"&&<Choose cs={cs} lang={lang} list={list} live={live} back={home} pick={p=>goCompose(p,"choose")}/>}
+        {scr==="match"&&<Match cs={cs} lang={lang} list={list} apiKey={key} back={home} pick={p=>goCompose(p,"match")} needKey={()=>{}}/>}
         {scr==="compose"&&sel&&<Compose cs={cs} lang={lang} pr={sel} apiKey={key} back={()=>setScr(composeBack)} needKey={()=>{}} addLetter={addLetter}/>}
         {scr==="scan"&&<Scan cs={cs} lang={lang} apiKey={key} back={home} needKey={()=>{}}/>}
-        {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(p,"collection")} remove={removeLetter}/>}
+        {scr==="collection"&&<Collection cs={cs} letters={letters} back={home} pick={p=>goCompose(list.find(x=>x.i===p.i)||p,"collection")} remove={removeLetter}/>}
         {scr==="faq"&&<FAQ cs={cs} back={home}/>}
       </div>
 
@@ -189,7 +327,7 @@ export default function App(){
             </div>
             <div className="flex-1">
               <div className="font-bold text-white mb-3 text-sm">{t("Spolupráce","Partnership","Партнёры")}</div>
-              <p className="leading-relaxed text-stone-400 text-xs">{t("Databáze vězňů vychází z dat ","Prisoner database based on data from ","База заключённых основана на данных ")}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Memorial</a>{t(" a ","  and "," и ")}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>{t(".",".",".")}</p>
+              <p className="leading-relaxed text-stone-400 text-xs">{t("Data a fotografie vězňů: ","Prisoner data and photos: ","Данные и фотографии заключённых: ")}<a href="https://ovd.info" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("OVD-Info","OVD-Info","ОВД-Инфо")}</a>{t(" (projekt Věstočka). Další podklady: "," (Vestochka project). Additional sources: "," (проект «Весточка»). Дополнительные источники: ")}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("Memorial","Memorial","Мемориал")}</a>{t(" a "," and "," и ")}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>.</p>
             </div>
           </div>
           <div className="border-t border-stone-700 pt-5 flex flex-col sm:flex-row justify-between gap-2 text-stone-500 text-[11px]">
@@ -203,7 +341,7 @@ export default function App(){
   );
 }
 
-function Home({cs,go,pickRandom}){
+function Home({cs,list,go,pickRandom}){
   return(<>
     {/* HERO */}
     <section className="text-white relative overflow-hidden" style={{backgroundColor:"#353A40"}}>
@@ -243,7 +381,7 @@ function Home({cs,go,pickRandom}){
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Tři kroky k napsání dopisu","How it works in three steps","Три шага к написанию письма")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            {n:"01",t:t("Najděte adresáta","Find a recipient","Найдите адресата"),d:t("AI vám doporučí vězně podle vašich zájmů a profese, nebo si vyberete sami z databáze 30+ politických vězňů.","AI recommends a prisoner based on your interests, or pick yourself from a database of 30+ political prisoners.","ИИ подберёт политзаключённого по вашим интересам и профессии, или вы можете выбрать самостоятельно из базы 30+ человек.")},
+            {n:"01",t:t("Najděte adresáta","Find a recipient","Найдите адресата"),d:t("AI vám doporučí vězně podle vašich zájmů a profese, nebo si vyberete sami z aktuální databáze OVD-Info.","AI recommends a prisoner based on your interests, or pick someone yourself from the up-to-date OVD-Info database.","ИИ подберёт политзаключённого по вашим интересам и профессии, или выберите адресата сами в актуальной базе ОВД-Инфо.")},
             {n:"02",t:t("Napište dopis","Write a letter","Напишите письмо"),d:t("Napište vlastní text, nebo nechte AI připravit návrh. Systém vždy zkontroluje pravidla cenzury, abyste neriskovali zabavení.","Write your own text, or let AI draft it. Either way, the system checks censorship rules to avoid confiscation.","Напишите текст сами или доверьте это ИИ. Система проверит текст на соответствие правилам тюремной цензуры.")},
             {n:"03",t:t("Odešlete","Send it","Отправьте"),d:t("Online přes Prisonmail.online (od $1.5/stránku) nebo klasickou poštou (48 Kč). Nástroj vás provede.","Online via Prisonmail.online (from $1.5/page) or by regular mail. The tool guides you through it.","Онлайн через Prisonmail.online (от $1.5 за страницу) или обычной почтой. Инструмент проведёт вас через все шаги.")},
           ].map((s,i)=>
@@ -267,9 +405,9 @@ function Home({cs,go,pickRandom}){
           <button onClick={()=>go("choose")} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">📋</div>
             <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Procházet vězně","Browse prisoners","Список заключённых")}</div>
-            <div className="text-stone-500 text-sm leading-relaxed">{_lang==="cs"?`Projděte si ${P.filter(p=>p.o).length} profilů, filtrujte podle zájmů a témat.`:_lang==="ru"?`Просмотрите ${P.filter(p=>p.o).length} профилей, фильтруйте по интересам и темам.`:`Browse ${P.filter(p=>p.o).length} profiles, filter by interests and topics.`}</div>
+            <div className="text-stone-500 text-sm leading-relaxed">{_lang==="cs"?`Projděte si ${list.length} profilů, filtrujte podle zájmů a témat.`:_lang==="ru"?`Просмотрите ${list.length} профилей, фильтруйте по интересам и темам.`:`Browse ${list.length} profiles, filter by interests and topics.`}</div>
           </button>
-          <button onClick={()=>{const online=P.filter(p=>p.o);pickRandom(online[Math.floor(Math.random()*online.length)]);}} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
+          <button onClick={()=>{const online=list.filter(p=>p.o);pickRandom(online[Math.floor(Math.random()*online.length)]);}} className="bg-white p-6 rounded-xl text-left transition-all hover:shadow-xl hover:-translate-y-1 border border-stone-200 group">
             <div className="w-12 h-12 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center mb-4 text-2xl transition-colors">🎲</div>
             <div className="font-bold text-base mb-1 text-stone-800" style={{fontFamily:"system-ui"}}>{t("Náhodný adresát","Random recipient","Выбрать случайно")}</div>
             <div className="text-stone-500 text-sm leading-relaxed">{t("Systém vám vybere někoho, kdo dopisy potřebuje nejvíc.","System picks someone who needs letters the most.","Система выберет того, кто больше всего нуждается в письмах.")}</div>
@@ -325,52 +463,60 @@ function Home({cs,go,pickRandom}){
   </>);
 }
 
-function Choose({cs,lang,back,pick}){
+function Choose({cs,lang,list,live,back,pick}){
   const [f,setF]=useState("all");
   const [q,setQ]=useState("");
+  const [shown,setShown]=useState(30);
+  useEffect(()=>{setShown(30);},[f,q]);
   const tops=cs?TOPICS_CZ:TOPICS_EN;
-  const list=P.filter(p=>{if(f==="f"&&p.g!=="f")return false;if(f==="m"&&p.g!=="m")return false;if(f==="y"&&p.a>30)return false;return fz(q,p,cs);});
+  const csCache=cs?readCs():{};
+  const res=list.filter(p=>{if(f==="f"&&p.g!=="f")return false;if(f==="m"&&p.g!=="m")return false;if(f==="y"&&(p.a==null||p.a>30))return false;return fz(q,p);});
   const ht=t=>{if(t.q==="f"||t.q==="m"){setF(t.q);setQ("");}else{setF("all");setQ(t.q);}};
   return(<div className="max-w-4xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>{t("Vyberte adresáta","Choose a recipient","Выберите адресата")}</h2>
-    <input value={q} onChange={e=>{setQ(e.target.value);setF("all");}} placeholder={t("Hledat — jméno, zájem, téma...","Search — name, interest, topic...","Поиск — имя, интерес, тема...")} className="w-full border border-stone-200 rounded p-3 mb-3 text-sm outline-none focus:border-red-600"/>
+    {live===null&&<div className="flex items-center gap-2 text-stone-500 text-xs mb-3" style={{fontFamily:"system-ui"}}><div className="w-3 h-3 border-2 border-stone-200 border-t-red-600 rounded-full animate-spin"/>{t("Načítám aktuální seznam vězňů z OVD-Info…","Loading the current list of prisoners from OVD-Info…","Загружаю актуальный список заключённых из ОВД-Инфо…")}</div>}
+    {live===false&&<div className="bg-amber-50 border border-amber-200 rounded p-2 text-xs text-stone-600 mb-3">{t("Aktuální seznam z OVD-Info se teď nepodařilo načíst, zobrazujeme jen základní výběr. Údaje nemusí být aktuální.","The current list from OVD-Info could not be loaded, showing a basic selection. The data may be out of date.","Не удалось загрузить актуальный список ОВД-Инфо, показываем базовую подборку. Данные могут быть неактуальны.")}</div>}
+    <input value={q} onChange={e=>{setQ(e.target.value);setF("all");}} placeholder={t("Hledat — jméno, profese, město, téma...","Search — name, occupation, city, topic...","Поиск — имя, профессия, город, тема...")} className="w-full border border-stone-200 rounded p-3 mb-3 text-sm outline-none focus:border-red-600"/>
     <div className="flex gap-1.5 flex-wrap mb-4">
-      <button onClick={()=>{setF("all");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${!q&&f==="all"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t("Všichni","All","Все")} ({P.length})</button>
+      <button onClick={()=>{setF("all");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${!q&&f==="all"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t("Všichni","All","Все")} ({list.length})</button>
       <button onClick={()=>{setF("f");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="f"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👩 {t("Ženy","Women","Женщины")}</button>
       <button onClick={()=>{setF("m");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="m"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>👨 {t("Muži","Men","Мужчины")}</button>
       <button onClick={()=>{setF("y");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="y"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>🧑 {t("Mladí","Young","Молодые")}</button>
       {tops.map(t=><button key={t.q} onClick={()=>ht(t)} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${q===t.q?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t.l}</button>)}
     </div>
-    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{list.length} {t("výsledků","results","результатов")}</div>
-    {list.length===0?<p className="text-center text-stone-400 py-8">{t("Žádné výsledky. Zkuste jiný výraz.","No results. Try different terms.","Нет результатов. Попробуйте другой запрос.")}</p>:
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(p=>
+    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{res.length} {t("výsledků","results","результатов")}</div>
+    {res.length===0?<p className="text-center text-stone-400 py-8">{t("Žádné výsledky. Zkuste jiný výraz.","No results. Try different terms.","Нет результатов. Попробуйте другой запрос.")}</p>:<>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{res.slice(0,shown).map(p=>
       <button key={p.i} onClick={()=>pick(p)} className="text-left bg-white border border-stone-200 rounded-lg p-4 hover:border-red-600 hover:shadow-md transition-all">
         <div className="flex items-start gap-3 mb-2">
-          <div className="w-9 h-9 bg-stone-200 rounded-full flex items-center justify-center text-stone-500 font-bold text-xs flex-shrink-0" style={{fontFamily:"system-ui"}}>{(_lang==="cs"?p.n:_lang==="ru"?(p.nr||p.ne):p.ne).charAt(0)}</div>
-          <div><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{_lang==="cs"?p.n:_lang==="ru"?(p.nr||p.ne):p.ne}</div><div className="text-[11px] text-stone-400">{p.a} {t("let","yo","лет")} · {_lang==="cs"?p.p:_lang==="ru"?(p.pru||p.pe):p.pe}</div></div>
+          <Avatar p={p} size="w-11 h-11 text-xs"/>
+          <div className="min-w-0"><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{nm(p)}</div><div className="text-[11px] text-stone-400">{meta(p,true)}</div></div>
         </div>
         <div className="text-[11px] text-red-700 font-medium mb-1" style={{fontFamily:"system-ui"}}>{sentLbl(p)}</div>
-        <div className="text-xs text-stone-500 leading-relaxed">{_lang==="cs"?p.d:_lang==="ru"?(p.dr||p.de):p.de}</div>
+        <div className="text-xs text-stone-500 leading-relaxed line-clamp-4">{desc(p,cachedCs(p,csCache))}</div>
         <div className="flex flex-wrap gap-1 mt-2">
           {p.o&&<span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded" style={{fontFamily:"system-ui"}}>✉ Online</span>}
           {(_lang==="cs"?p.int:p.ie).slice(0,2).map(t=><span key={t} className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-400 rounded" style={{fontFamily:"system-ui"}}>{t}</span>)}
         </div>
       </button>
-    )}</div>}
+    )}</div>
+    {res.length>shown&&<div className="text-center mt-5"><button onClick={()=>setShown(n=>n+30)} className="bg-white border border-stone-300 hover:border-red-600 text-stone-700 px-5 py-2 rounded text-sm font-bold" style={{fontFamily:"system-ui"}}>{t("Zobrazit další","Show more","Показать ещё")} ({res.length-shown})</button></div>}
+    </>}
   </div>);
 }
 
-function Match({cs,lang,apiKey,back,pick,needKey}){
+function Match({cs,lang,list,apiKey,back,pick,needKey}){
   const [about,setAbout]=useState("");
   const [loading,setLoading]=useState(false);
   const [result,setResult]=useState(null);
   const [err,setErr]=useState("");
+  const {m:csd,busy:trBusy,fail:trFail}=useCsDesc(result&&result.picks?result.picks.map(x=>x.prisoner):[],lang);
   const go=async()=>{
     if(!apiKey){needKey();return;}
     setLoading(true);setErr("");setResult(null);
     try{
-      const r=await ai(apiKey,sM(lang,P),about);
+      const r=await ai(apiKey,sM(lang,list),about);
       // Strip markdown fences if present
       const cleaned=extractTag(r,"json").replace(/```json|```/g,"").trim();
       try{
@@ -379,10 +525,10 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
         if(parsed.picks&&Array.isArray(parsed.picks)){
           // Match IDs to actual prisoners
           const seen=new Set();
-          parsed.picks=parsed.picks.map(p=>({...p,prisoner:P.find(pr=>pr.i===p.id)})).filter(p=>p.prisoner&&!seen.has(p.id)&&seen.add(p.id));
+          parsed.picks=parsed.picks.map(p=>({...p,prisoner:list.find(pr=>pr.i===p.id)})).filter(p=>p.prisoner&&!seen.has(p.id)&&seen.add(p.id));
           // Top up to 3 if the model returned fewer valid picks (unknown ids, duplicates)
           if(parsed.picks.length<3){
-            const rest=P.filter(p=>p.o&&!seen.has(p.i)).sort(()=>Math.random()-.5);
+            const rest=shuffle(list.filter(p=>p.o&&!seen.has(p.i)));
             for(const pr of rest.slice(0,3-parsed.picks.length))parsed.picks.push({id:pr.i,prisoner:pr,reason:""});
           }
           setResult(parsed);
@@ -415,14 +561,17 @@ function Match({cs,lang,apiKey,back,pick,needKey}){
         {result.picks.map((p,i)=>
           <button key={p.id} onClick={()=>pick(p.prisoner)} className="w-full text-left bg-white hover:bg-red-50 border-2 border-stone-200 hover:border-red-600 rounded-lg p-4 transition-all group">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-red-100 group-hover:bg-red-200 text-red-700 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0 transition-colors" style={{fontFamily:"system-ui"}}>{i+1}</div>
+              <div className="relative flex-shrink-0">
+                <Avatar p={p.prisoner} size="w-12 h-12 text-base"/>
+                <div className="absolute -top-1 -left-1 w-5 h-5 bg-red-700 text-white rounded-full flex items-center justify-center font-bold text-[10px]" style={{fontFamily:"system-ui"}}>{i+1}</div>
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline justify-between gap-2 mb-1">
-                  <div className="font-bold text-stone-800" style={{fontFamily:"system-ui"}}>{cs?p.prisoner.n:p.prisoner.ne}</div>
-                  <div className="text-[11px] text-stone-400 flex-shrink-0" style={{fontFamily:"system-ui"}}>{p.prisoner.a} {t("let","yo","лет")} · {cs?p.prisoner.p:p.prisoner.pe}</div>
+                <div className="flex items-baseline justify-between gap-2 mb-1 flex-wrap">
+                  <div className="font-bold text-stone-800" style={{fontFamily:"system-ui"}}>{nm(p.prisoner)}</div>
+                  <div className="text-[11px] text-stone-400" style={{fontFamily:"system-ui"}}>{meta(p.prisoner,true)}</div>
                 </div>
-                <div className="text-xs text-red-700 font-medium mb-2" style={{fontFamily:"system-ui"}}>{cs?p.prisoner.s:p.prisoner.se}</div>
-                <p className="text-sm text-stone-600 leading-relaxed">{t(p.prisoner.d,p.prisoner.de,p.prisoner.dr||p.prisoner.de)}</p>
+                <div className="text-xs text-red-700 font-medium mb-2" style={{fontFamily:"system-ui"}}>{sentLbl(p.prisoner)}</div>
+                <PrisonerDesc p={p.prisoner} cz={csd[p.prisoner.i]} busy={trBusy} fail={trFail} className="text-sm text-stone-600 leading-relaxed"/>
                 {p.reason&&<p className="text-xs text-stone-500 mt-1.5" style={{fontFamily:"system-ui"}}>✓ {p.reason}</p>}
                 <div className="flex items-center gap-1 mt-2 text-red-600 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity" style={{fontFamily:"system-ui"}}>{t("Napsat tomuto člověku","Write to this person","Написать этому человеку")} →</div>
               </div>
@@ -450,6 +599,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
   const [copied,setCopied]=useState(false);
   const [saved,setSaved]=useState(false);
   const [showGuide,setShowGuide]=useState(false);
+  const {m:csd,busy:trBusy,fail:trFail}=useCsDesc([pr],lang);
   const cp=t=>{try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch(e){}};
   const gen=async()=>{if(!apiKey){needKey();return;}if(!about.trim())return;setLoading(true);setLmsg(t("Generuji...","Generating...","Генерирую..."));setErr("");setResult(null);try{const sys=sW(lang,pr,lt,sm,g);const r=await ai(apiKey,sys,`${t("O mně","About me","Обо мне")}: ${about}\n\n${t("Napiš","Write","Напиши")} ${lt==="postcard"?(t("pohlednici","postcard","открытку")):(t("dopis","letter","письмо"))} pro ${pr.ne}.`);let letter=cleanLetter(extractLetter(r));if(DUAL_FORM_RE.test(letter)){const fixed=cleanLetter(extractLetter(await ai(apiKey,sys,sWFix(letter))));if(fixed&&fixed!=="No response")letter=fixed;}setResult(letter);}catch(e){setErr(e.message);}finally{setLoading(false);}};
   const chk=async()=>{if(!apiKey){needKey();return;}if(!text.trim())return;setLoading(true);setLmsg(t("Kontroluji...","Checking...","Проверяю..."));setErr("");setResult(null);try{const r=await ai(apiKey,sC(lang),text);setResult(r);}catch(e){setErr(e.message);}finally{setLoading(false);}};
@@ -465,10 +615,10 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
     <div className="bg-white border border-stone-200 rounded-lg overflow-hidden mb-4">
       <div className="text-white px-5 py-4" style={{backgroundColor:"#353A40"}}>
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-stone-700 rounded-full flex items-center justify-center font-black text-xl flex-shrink-0" style={{fontFamily:"system-ui"}}>{(cs?pr.n:pr.ne).charAt(0)}</div>
-          <div className="flex-1">
-            <div className="font-bold text-lg" style={{fontFamily:"system-ui"}}>{_lang==="cs"?pr.n:_lang==="ru"?(pr.nr||pr.ne):pr.ne}</div>
-            <div className="text-stone-300 text-sm">{pr.a} {t("let","years old","лет")} · {_lang==="cs"?pr.p:_lang==="ru"?(pr.pru||pr.pe):pr.pe}</div>
+          <Avatar p={pr} size="w-16 h-16 text-xl" variant="card" dark/>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-lg" style={{fontFamily:"system-ui"}}>{nm(pr)}</div>
+            <div className="text-stone-300 text-sm">{meta(pr,true)}</div>
           </div>
           <div className="text-right">
             <div className="text-red-400 font-bold text-sm" style={{fontFamily:"system-ui"}}>{sentLbl(pr)}</div>
@@ -477,14 +627,14 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
         </div>
       </div>
       <div className="px-5 py-4">
-        <div className="text-sm text-stone-700 leading-relaxed mb-3">{_lang==="cs"?pr.d:_lang==="ru"?(pr.dr||pr.de):pr.de}</div>
+        <PrisonerDesc p={pr} cz={csd[pr.i]} busy={trBusy} fail={trFail} className="text-sm text-stone-700 leading-relaxed mb-3"/>
         {(cs?pr.int:pr.ie).length>0&&<div className="flex flex-wrap gap-1.5 mb-3">
           {(cs?pr.int:pr.ie).map(t=><span key={t} className="text-[11px] px-2.5 py-0.5 bg-stone-100 text-stone-500 rounded-full" style={{fontFamily:"system-ui"}}>{t}</span>)}
         </div>}
         <div className="bg-stone-50 border-l-4 border-red-700 rounded-r p-3 text-sm text-stone-600 italic">
           {t("Každý dopis je pro vězněného člověka důkazem, že na něj svět nezapomněl. I pár vět může být jedinou nadějí v šedivém vězeňském dni.","Every letter shows a prisoner that the world hasn't forgotten them. Even a few sentences can be the only light in a gray prison day.","Каждое письмо — знак того, что о человеке помнят. Даже несколько строк могут стать лучом света в тюремных буднях.")}
         </div>
-        {pr.v&&<a href={pr.v} target="_blank" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{t("Profil na Vestochka.io →","Profile on Vestochka.io →","Профиль на Vestochka.io →")}</a>}
+        {vestUrl(pr)&&<a href={vestUrl(pr)} target="_blank" rel="noopener noreferrer" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{t("Celý příběh na Vestochka.io →","Full story on Vestochka.io →","Полная история на «Весточке» →")}</a>}
       </div>
     </div>
 

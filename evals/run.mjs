@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sW, sC, sT, sO, sM, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "../src/prompts.js";
+import { sW, sC, sT, sO, sM, sD, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "../src/prompts.js";
 import { runStreamParserTest } from "./stream-parser.mjs";
 
 const EVALS = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +34,19 @@ const P = new Function("return " + APP_SRC.match(/const P = (\[[\s\S]*?\n\]);/)[
 const cleanLetter = new Function(APP_SRC.match(/const cleanLetter = \(s\) => \{[\s\S]*?\n\};/)[0] + ";return cleanLetter;")();
 const T = { cs: 0, en: 1, ru: 2 };
 const t = (l, c, e, r) => [c, e, r][T[l]];
+
+// Cases with "db": "live" use the full current list from /api/prisoners (production by default)
+const PRISONERS_URL = process.env.PRISONERS_URL || "https://dopisyveznum.netlify.app/api/prisoners";
+let LIVE = null, livePromise = null;
+function liveDb() {
+  livePromise ??= fetch(PRISONERS_URL).then(async r => {
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !Array.isArray(j.prisoners)) throw new Error(`live prisoner list unavailable (${PRISONERS_URL}: ${r.status} ${j.error || ""})`);
+    return (LIVE = j.prisoners);
+  });
+  return livePromise;
+}
+const dbOf = c => (c && c.db === "live" ? LIVE : P) || [];
 
 // ---------- API calls ----------
 // Retry transient overload errors (429/500/503/529) with backoff
@@ -128,7 +141,8 @@ async function produce(c) {
     }
     case "sC": return claude(sC(l), input);
     case "sT": return claude(sT, input);
-    case "sM": return extractTag(await claude(sM(l, P), input), "json"); // same as Match in App.jsx
+    case "sM": return extractTag(await claude(sM(l, c.db === "live" ? await liveDb() : P), input), "json"); // same as Match in App.jsx
+    case "sD": return extractTag(await claude(sD, input), "json"); // Czech translation of prisoner descriptions (csDescs in App.jsx)
     case "sO": {
       const images = c.pdf_file ? await pdfToJpegs(path.join(EVALS, c.pdf_file)) : await imageToJpeg(path.join(EVALS, c.image_file));
       return gemini(sO(l), t(l, "Rozpoznej a přelož tento dopis.", "Recognize and translate.", "Распознай текст на изображении. Выведи только распознанный текст."), images);
@@ -163,12 +177,12 @@ async function judge(question, text, context, expect = true) {
   return { pass: j.answer === expect, reason: `judge answered ${j.answer} (expected ${expect}): ${j.reason}`, quote: j.quote };
 }
 
-function recordOf(id) {
-  const p = P.find(x => x.i === id);
+function recordOf(id, db = P) {
+  const p = db.find(x => x.i === id);
   return p && { id: p.i, name: p.ne, name_cs: p.n, age: p.a, profession: p.pe, interests: p.ie, sentence: p.se, description_en: p.de, description_cs: p.d };
 }
 
-async function check(ch, out, input) {
+async function check(ch, out, input, c) {
   switch (ch.type) {
     case "stream_parser": return runStreamParserTest();
     case "regex": {
@@ -233,13 +247,22 @@ async function check(ch, out, input) {
       return !long.length ? { pass: true } : { pass: false, reason: `reason longer than ${ch.max} chars`, excerpt: long[0] };
     }
     case "picks_ids_in_P": {
-      const bad = parseJson(out).picks.map(p => p.id).filter(id => !P.some(p => p.i === id));
+      const db = dbOf(c);
+      const bad = parseJson(out).picks.map(p => p.id).filter(id => !db.some(p => p.i === id));
       return !bad.length ? { pass: true } : { pass: false, reason: "ids not in P: " + bad.join(", ") };
     }
     case "picks_facts_from_P": {
-      const picks = parseJson(out).picks.map(p => ({ reason: p.reason, record: recordOf(p.id) }));
+      const picks = parseJson(out).picks.map(p => ({ reason: p.reason, record: recordOf(p.id, dbOf(c)) }));
       const q = "Each item has a recommendation REASON and the prisoner's database RECORD. Does any reason state a fact about the prisoner that is NOT supported by that prisoner's record (e.g. calling them a lawyer, or saying they worked in law, when the record only lists law as an interest)? Rephrasing is fine. Statements comparing the prisoner with the user (e.g. similar age) are not prisoner facts.";
       return judge(q, JSON.stringify(picks, null, 1), input, false);
+    }
+    case "same_keys_as_input": {
+      const a = Object.keys(JSON.parse(input)).sort().join(","), b = Object.keys(parseJson(out)).sort().join(",");
+      return a === b ? { pass: true } : { pass: false, reason: `keys differ: input ${a} / output ${b}` };
+    }
+    case "no_cyrillic": {
+      const m = /[а-яё]+/i.exec(out);
+      return !m ? { pass: true } : { pass: false, reason: "Cyrillic left in the translation", excerpt: excerpt(out, m.index) };
     }
     case "judge": {
       const text = ch.on === "reasons" ? parseJson(out).picks.map(p => "- " + p.reason).join("\n") : out;
@@ -260,7 +283,7 @@ async function runOnce(c, k) {
   const fails = [];
   for (const ch of c.checks) {
     let r;
-    try { r = await check(ch, out, inputOf(c)); } catch (e) { r = { pass: false, reason: `check error: ${e.message}` }; }
+    try { r = await check(ch, out, inputOf(c), c); } catch (e) { r = { pass: false, reason: `check error: ${e.message}` }; }
     if (!r.pass) fails.push({ check: ch.type, reason: r.reason, excerpt: r.excerpt || r.quote || "" });
   }
   return { status: fails.length ? "FAIL" : "PASS", fails };

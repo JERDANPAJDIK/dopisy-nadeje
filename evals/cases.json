@@ -117,7 +117,7 @@
       "prompt": "sW",
       "runs": 3,
       "lang": "cs",
-      "recipient": "yevgenia-maiboroda",
+      "recipient": "evgenia-maiboroda",
       "input": "Jsem člověk.",
       "note": "Sasha: with one sentence the AI invented her name, city and profession.",
       "checks": [
@@ -172,7 +172,7 @@
       "prompt": "sW",
       "runs": 3,
       "lang": "cs",
-      "recipient": "yevgenia-maiboroda",
+      "recipient": "evgenia-maiboroda",
       "input": "Jmenuji se Jana, je mi 42 let a jsem učitelka z Brna. Dlouho jsem přemýšlela, co vám napsat. Ráda bych vám popřála hodně sil.",
       "checks": [
         {
@@ -214,7 +214,7 @@
       "prompt": "sW",
       "runs": 3,
       "lang": "cs",
-      "recipient": "yevgenia-maiboroda",
+      "recipient": "evgenia-maiboroda",
       "gender": "f",
       "input": "Chci vám poslat pozdrav a popřát hodně sil.",
       "note": "UI switch 'Píšu jako: žena', nothing gendered in the text.",
@@ -260,7 +260,7 @@
       "prompt": "sW",
       "runs": 3,
       "lang": "cs",
-      "recipient": "yevgenia-maiboroda",
+      "recipient": "evgenia-maiboroda",
       "gender": "",
       "input": "Jsem učitelka a chci vám popřát hodně sil.",
       "note": "Switch on neuvadet, gender only in the text: text gender must win over the neutral fallback.",
@@ -316,7 +316,7 @@
       "prompt": "sW",
       "runs": 3,
       "lang": "cs",
-      "recipient": "yuri-dmitriev",
+      "recipient": "yurii-dmitriev",
       "input": "Jmenuji se Tomáš, je mi 45 let a pracuji jako knihovník v Olomouci. Každé ráno chodím se psem podél řeky Moravy a myslím přitom na lidi, kteří ven jít nemohou. Moc mě mrzí, čemu musíte čelit. Zajímalo by mě, jestli máte ve vězení přístup ke knihám nebo k televizi. Přeji vám hodně sil a trpělivosti.",
       "note": "Sasha: the AI ignored her sentences (regret, question about TV) and invented details (profession-based knowledge).",
       "checks": [
@@ -460,6 +460,66 @@
           "type": "regex",
           "pattern": "Адела|nepodařilo přečíst",
           "why": "must contain Адела or the unreadable notice"
+        }
+      ]
+    },
+    {
+      "id": "sD-faithful-czech",
+      "prompt": "sD",
+      "lang": "cs",
+      "input": "{\"bogdan-abdurakhmanov\": \"Житель Краснодарского края. Приговорен к 13 годам колонии строгого режима по обвинению в совершении теракта из-за попытки поджога военкомата в городе Горячий Ключ\", \"tatiana-arshinova\": \"Активистка из Нижнего Новгорода. Под стражей по делу о причастности к деятельности экстремистской организации из-за публикаций о работе в Фонде борьбы с коррупцией и к деятельности террористической организации — по версии следствия, она переписывалась с «куратором» из Легиона «Свобода России»\"}",
+      "note": "Czech translation of OVD-Info descriptions shown to Czech users (csDescs in App.jsx). Public OVD-Info texts.",
+      "checks": [
+        {
+          "type": "json"
+        },
+        {
+          "type": "same_keys_as_input"
+        },
+        {
+          "type": "no_cyrillic"
+        },
+        {
+          "type": "judge",
+          "question": "The output is a Czech translation of the Russian texts in the input. Does any Czech text add a fact, opinion or evaluation that is not in the Russian original, or leave out a fact that is there?",
+          "expect": false
+        }
+      ]
+    },
+    {
+      "id": "sM-live-three-valid-picks",
+      "prompt": "sM",
+      "db": "live",
+      "runs": 3,
+      "lang": "cs",
+      "input": "Jsem učitelka, je mi 45 let a ráda čtu.",
+      "note": "Matching over the full current OVD-Info list (~1 200 people, compact lines). Needs the deployed /api/prisoners (or PRISONERS_URL).",
+      "checks": [
+        {
+          "type": "json"
+        },
+        {
+          "type": "picks_count",
+          "equals": 3
+        },
+        {
+          "type": "picks_unique"
+        },
+        {
+          "type": "picks_ids_in_P"
+        },
+        {
+          "type": "picks_facts_from_P"
+        },
+        {
+          "type": "reasons_max_chars",
+          "max": 100
+        },
+        {
+          "type": "judge",
+          "on": "reasons",
+          "question": "These are short reasons shown next to recommended prisoners (an empty line means no reason). Does any non-empty reason claim something is shared with the user that the user did NOT write (e.g. a profession, age or interest the user never mentioned)?",
+          "expect": false
         }
       ]
     }

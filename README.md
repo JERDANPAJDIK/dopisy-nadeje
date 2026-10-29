@@ -34,13 +34,15 @@ Výstup je v `dist/`.
    - Publish directory: `dist`
 5. **Důležité**: Site settings → Environment variables → přidat:
    - `ANTHROPIC_API_KEY` = tvůj klíč z console.anthropic.com
+   - `OVD_API_KEY` = klíč k API OVD-Info (dostali jsme ho přes Věstočku; jen na serveru, nikdy v kódu)
 6. Deploy
 
 ## Architektura
 
 - **Frontend**: React + Vite + Tailwind, single page app
-- **Backend**: Netlify Function (`netlify/functions/claude.js`) jako proxy k Anthropic API
-- API klíč je vždy server-side, nikdy se nedostane do prohlížeče
+- **Backend**: Netlify Edge Function (`netlify/edge-functions/claude.js`) jako proxy k Anthropic API
+- **Data vězňů**: Netlify Function `netlify/functions/prisoners.mjs` na `/api/prisoners` – stahuje z API OVD-Info (`api-data.ovd.info/profiles`, stejný výběr jako Věstočka), převádí do formátu aplikace a Netlify odpověď drží v CDN cache 6 h. Ručně psané texty Gulag.cz (pole `P` v `App.jsx`) se přes ně překryjí.
+- API klíče jsou vždy server-side, nikdy se nedostanou do prohlížeče
 
 ## Cena provozu
 
@@ -50,7 +52,7 @@ Výstup je v `dist/`.
 
 ## Limity prototypu, které je potřeba řešit pro produkci
 
-1. **Databáze vězňů je hardcoded v JS** — pro produkci by se měla získávat živě z Vestochka.io API (kontaktovat OVD-Info pro přístup) nebo z gulag.cz
+1. ~~Databáze vězňů je hardcoded v JS~~ — od 10/2026 živě z API OVD-Info (viz výše)
 2. **Sbírka dopisů uživatele se ztratí při refresh** — potřeba persistence (localStorage nebo backend)
 3. **Žádné rate limiting** — kdokoli by mohl spamovat AI volání. Doporučuji přidat Cloudflare Turnstile nebo session limit
 4. **Žádná analytika** — přidat Plausible nebo Google Analytics
