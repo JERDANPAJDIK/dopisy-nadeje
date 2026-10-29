@@ -353,7 +353,7 @@ export default function App(){
           </div>
           <div className="border-t border-stone-700 pt-5 flex flex-col sm:flex-row justify-between gap-2 text-stone-500 text-[11px]">
             <div>© 2026 <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300">Gulag.cz</a> · {t("Všechna práva vyhrazena","All rights reserved","Все права защищены")}</div>
-            <div>{t("Děkujeme za podporu Erasmus+, MZV ČR a Alza.cz","Supported by Erasmus+, Czech MFA and Alza.cz","При поддержке Erasmus+, МИД ЧР и Alza.cz")}</div>
+            <div>{t("Děkujeme za podporu Alza.cz","Supported by Alza.cz","При поддержке Alza.cz")}</div>
           </div>
           <p className="text-stone-500 text-[11px] mt-3 leading-relaxed">{OPJAK_TEXT()}</p>
         </div>
