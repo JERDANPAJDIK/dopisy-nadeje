@@ -376,7 +376,11 @@ export default function App(){
             <div>© 2026 <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300">Gulag.cz</a> · {t("Všechna práva vyhrazena","All rights reserved","Все права защищены")}</div>
             <div>{t("Děkujeme za podporu Alza.cz","Supported by Alza.cz","При поддержке Alza.cz")}</div>
           </div>
-          <p className="text-stone-500 text-[11px] mt-3 leading-relaxed">{OPJAK_TEXT()}</p>
+          {/* OP JAK mandatory publicity: full-colour EU + MSMT logolink with the funding statement, project description (Reg. 2021/1060 art. 47, 50) */}
+          <div className="mt-5 bg-white rounded-lg px-4 py-3 flex flex-col md:flex-row md:items-center gap-2 md:gap-5">
+            <img src={_lang==="cs"?"/opjak-logolink-cs.svg":"/opjak-logolink-en.svg"} alt={t("Spolufinancováno Evropskou unií. Ministerstvo školství, mládeže a tělovýchovy","Co-funded by the European Union. Ministry of Education, Youth and Sports","Софинансируется Европейским союзом. Министерство образования, по делам молодёжи и спорта Чехии")} className="h-10 w-auto max-w-full self-start md:self-auto"/>
+            <p className="text-[11px] text-stone-600 leading-snug">{OPJAK_TEXT()}</p>
+          </div>
         </div>
       </footer>
 
@@ -386,13 +390,6 @@ export default function App(){
 
 function Home({cs,list,go,pickRandom}){
   return(<>
-    {/* OP JAK mandatory publicity: EU + MSMT logolink and project description, visible without scrolling */}
-    <section className="bg-white border-b border-stone-200 px-4 py-2">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-1.5 md:gap-5">
-        <img src={_lang==="cs"?"/opjak-logolink-cs.svg":"/opjak-logolink-en.svg"} alt={t("Spolufinancováno Evropskou unií. Ministerstvo školství, mládeže a tělovýchovy","Co-funded by the European Union. Ministry of Education, Youth and Sports","Софинансируется Европейским союзом. Министерство образования, по делам молодёжи и спорта Чехии")} className="h-10 w-auto max-w-full self-start md:self-auto"/>
-        <p className="text-[11px] text-stone-500 leading-snug" style={{fontFamily:"system-ui"}}>{OPJAK_TEXT()}</p>
-      </div>
-    </section>
     {/* HERO */}
     <section className="text-white relative overflow-hidden" style={{backgroundColor:"#353A40"}}>
       <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 32px,rgba(220,38,38,.6) 32px,rgba(220,38,38,.6) 33px)"}}/>
