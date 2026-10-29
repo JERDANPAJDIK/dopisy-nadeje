@@ -164,6 +164,13 @@ const cleanLetter = (s) => {
   return out.trim();
 };
 
+// OP JAK project (Gulag.cz) - mandatory publicity text, shown on the home page and in the footer
+const OPJAK_TEXT = () => t(
+  "Aplikace vznikla v projektu Sovětské represe a současné Rusko jako učebnice pro občanské vzdělávání a výchovu k demokracii (reg. č. CZ.02.02.05/00/24_038/0016474), který realizuje Gulag.cz za finanční podpory Evropské unie z Operačního programu Jan Amos Komenský.",
+  "This app was created within the project Soviet Repression and Contemporary Russia as a Textbook for Civic Education and Education for Democracy (reg. no. CZ.02.02.05/00/24_038/0016474), implemented by Gulag.cz with financial support from the European Union under the Jan Amos Komensky Operational Programme.",
+  "Приложение создано в рамках проекта «Советские репрессии и современная Россия как учебник гражданского образования и воспитания демократии» (рег. № CZ.02.02.05/00/24_038/0016474), который Gulag.cz реализует при финансовой поддержке Европейского союза в рамках Операционной программы имени Яна Амоса Коменского."
+);
+
 // ---------- prisoners ----------
 // The full, current list comes from /api/prisoners (OVD-Info, see netlify/functions/prisoners.mjs).
 // P above is the hand-written overlay from Gulag.cz (Czech texts, occupations, interests), see mergePrisoners.
@@ -341,13 +348,14 @@ export default function App(){
             </div>
             <div className="flex-1">
               <div className="font-bold text-white mb-3 text-sm">{t("Spolupráce","Partnership","Партнёры")}</div>
-              <p className="leading-relaxed text-stone-400 text-xs">{t("Data a fotografie vězňů: ","Prisoner data and photos: ","Данные и фотографии заключённых: ")}<a href="https://ovd.info" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("OVD-Info","OVD-Info","ОВД-Инфо")}</a>{t(" (projekt Věstočka). Další podklady: "," (Vestochka project). Additional sources: "," (проект «Весточка»). Дополнительные источники: ")}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("Memorial","Memorial","Мемориал")}</a>{t(" a "," and "," и ")}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>.</p>
+              <p className="leading-relaxed text-stone-400 text-xs">{t("Data a fotografie vězňů: ","Prisoner data and photos: ","Данные и фотографии заключённых: ")}<a href="https://ovd.info" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("OVD-Info","OVD-Info","ОВД-Инфо")}</a>{t(". Děkujeme týmu Věstočky, projektu OVD-Info, za zpřístupnění dat. Další podklady: ",". Thanks to the team of Vestochka, an OVD-Info project, for access to the data. Additional sources: ",". Спасибо команде «Весточки», проекта ОВД-Инфо, за доступ к данным. Дополнительные источники: ")}<a href="https://memopzk.org" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">{t("Memorial","Memorial","Мемориал")}</a>{t(" a "," and "," и ")}<a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300 underline">Gulag.cz</a>.</p>
             </div>
           </div>
           <div className="border-t border-stone-700 pt-5 flex flex-col sm:flex-row justify-between gap-2 text-stone-500 text-[11px]">
             <div>© 2026 <a href="https://gulag.cz" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:text-red-300">Gulag.cz</a> · {t("Všechna práva vyhrazena","All rights reserved","Все права защищены")}</div>
             <div>{t("Děkujeme za podporu Erasmus+, MZV ČR a Alza.cz","Supported by Erasmus+, Czech MFA and Alza.cz","При поддержке Erasmus+, МИД ЧР и Alza.cz")}</div>
           </div>
+          <p className="text-stone-500 text-[11px] mt-3 leading-relaxed">{OPJAK_TEXT()}</p>
         </div>
       </footer>
 
@@ -357,6 +365,13 @@ export default function App(){
 
 function Home({cs,list,go,pickRandom}){
   return(<>
+    {/* OP JAK mandatory publicity: EU + MSMT logolink and project description, visible without scrolling */}
+    <section className="bg-white border-b border-stone-200 px-4 py-2">
+      <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-1.5 md:gap-5">
+        <img src={_lang==="cs"?"/opjak-logolink-cs.svg":"/opjak-logolink-en.svg"} alt={t("Spolufinancováno Evropskou unií. Ministerstvo školství, mládeže a tělovýchovy","Co-funded by the European Union. Ministry of Education, Youth and Sports","Софинансируется Европейским союзом. Министерство образования, по делам молодёжи и спорта Чехии")} className="h-10 w-auto max-w-full self-start md:self-auto"/>
+        <p className="text-[11px] text-stone-500 leading-snug" style={{fontFamily:"system-ui"}}>{OPJAK_TEXT()}</p>
+      </div>
+    </section>
     {/* HERO */}
     <section className="text-white relative overflow-hidden" style={{backgroundColor:"#353A40"}}>
       <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 32px,rgba(220,38,38,.6) 32px,rgba(220,38,38,.6) 33px)"}}/>
@@ -648,6 +663,7 @@ function Compose({cs,lang,pr,apiKey,back,needKey,addLetter}){
         <div className="bg-stone-50 border-l-4 border-red-700 rounded-r p-3 text-sm text-stone-600 italic">
           {t("Každý dopis je pro vězněného člověka důkazem, že na něj svět nezapomněl. I pár vět může být jedinou nadějí v šedivém vězeňském dni.","Every letter shows a prisoner that the world hasn't forgotten them. Even a few sentences can be the only light in a gray prison day.","Каждое письмо — знак того, что о человеке помнят. Даже несколько строк могут стать лучом света в тюремных буднях.")}
         </div>
+        {pr.src==="ovd"&&<div className="mt-3 text-[11px] text-stone-400" style={{fontFamily:"system-ui"}}>{t("Údaje a fotografie: OVD-Info","Data and photo: OVD-Info","Данные и фото: ОВД-Инфо")}</div>}
         {vestUrl(pr)&&<a href={vestUrl(pr)} target="_blank" rel="noopener noreferrer" className="inline-block mt-3 text-xs text-red-600 hover:underline" style={{fontFamily:"system-ui"}}>{t("Celý příběh na Vestochka.io →","Full story on Vestochka.io →","Полная история на «Весточке» →")}</a>}
       </div>
     </div>
