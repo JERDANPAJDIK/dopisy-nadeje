@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { sW, sC, sT, sO, sM, sD, parseTranslations, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
+import { sW, sC, sT, sO, sM, sD, parseTranslations, textHash, sWFix, DUAL_FORM_RE, extractLetter, extractTag } from "./prompts.js";
 
 const P = [
   {i:"arseniy-turbin",n:"Arsenij Turbin",ne:"Arseniy Turbin",nr:"Турбин Арсений",a:17,p:"Student",pe:"Student",int:["Fyzika","Matematika","Fotbal"],ie:["Physics","Math","Football"],s:"5 let",se:"5 years",d:"Zadržen v 15 letech za vyplnění online dotazníku. Policista mu řekl, že to není proti zákonu. Přesto odsouzen k 5 letům. Ve vězení zbit spoluvězněm. Zajímá se o fyziku, matematiku a fotbal.",de:"Detained at 15 for filling an online questionnaire. Police told him it wasn't illegal. Still sentenced to 5 years. Beaten by cellmate in prison. Interested in physics, math, football.",ad:"614056, Пермский край, г. Пермь, ул. Соликамская, д. 246а, ФКУ СИЗО-5",o:true,v:"https://vestochka.io/en/p/arseniy-turbin",g:"m",src:"gulag",pru:"Студент",sr:"5 лет",dr:"Задержан в 15 лет за заполнение онлайн-анкеты. Полицейский сказал, что это не запрещено. Тем не менее приговорён к 5 годам. В колонии избит сокамерником. Увлекается физикой, математикой и футболом."},
@@ -224,15 +224,19 @@ function PrisonerDesc({ p, cz, busy, fail, className, noNote }) {
     return null;
   }
   if (!txt) return null;
-  return <p className={className}>{txt}{_lang === "cs" && !p.d && cz && !noNote && <span className="block text-[10px] text-stone-400 mt-1" style={{ fontFamily: "system-ui" }}>Automatický překlad popisu z OVD-Info</span>}</p>;
+  return <p className={className}>{txt}{_lang === "cs" && !p.d && cz && !noNote && <span className="block text-[10px] text-stone-400 mt-1" style={{ fontFamily: "system-ui" }}>Strojový překlad popisu z OVD-Info</span>}</p>;
 }
 
 // Czech translations of OVD-Info descriptions, cached in the browser (keyed by the profile's update time)
 const CS_KEY = "dopisy-nadeje-cs2"; // bump when the translation prompt changes (old translations are dropped)
 try { localStorage.removeItem("dopisy-nadeje-cs"); } catch (e) {}
 const readCs = () => { try { return JSON.parse(localStorage.getItem(CS_KEY) || "{}"); } catch (e) { return {}; } };
-const cachedCs = (p, cache) => p.d || (cache[p.i] && cache[p.i].u === p.u ? cache[p.i].d : "");
-// Small batches (8) on the fast model, 3 in parallel; onPart gets results as each batch finishes
+// Pre-translated descriptions (scripts/translate-descriptions.mjs, Claude Sonnet), valid while the Russian text is unchanged
+let _TR = {}, _trState = "loading";
+const loadTranslations = () => fetch("/translations-cs.json").then(r => r.ok ? r.json() : Promise.reject()).then(j => { _TR = j.t || {}; _trState = "ready"; }).catch(() => { _trState = "failed"; });
+const preCs = p => { const x = _TR[p.i]; return x && p.dr && x.h === (p.hr || (p.hr = textHash(p.dr))) ? x.d : ""; };
+const cachedCs = (p, cache) => p.d || preCs(p) || (cache[p.i] && cache[p.i].u === p.u ? cache[p.i].d : "");
+// Fallback for profiles missing in the pre-translated file: small batches (8), 3 in parallel; onPart gets results as each batch finishes
 async function csDescs(prs, onPart) {
   const cache = readCs();
   const need = prs.filter(p => !cachedCs(p, cache) && p.dr);
@@ -244,7 +248,7 @@ async function csDescs(prs, onPart) {
     while (next < chunks.length) {
       const chunk = chunks[next++];
       try {
-        const j = parseTranslations(await ai("server-managed", sD, JSON.stringify(Object.fromEntries(chunk.map(p => [p.i, p.dr]))), null, { fast: true }));
+        const j = parseTranslations(await ai("server-managed", sD, JSON.stringify(Object.fromEntries(chunk.map(p => [p.i, p.dr])))));
         for (const p of chunk) if (typeof j[p.i] === "string") cache[p.i] = { u: p.u, d: j[p.i] };
         if (!Object.keys(j).length) failed++;
       } catch (e) { failed++; }
@@ -268,7 +272,7 @@ function useCsDesc(prs, lang) {
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState(false);
   useEffect(() => {
-    if (lang !== "cs" || !prs.length) return;
+    if (lang !== "cs" || !prs.length || _trState === "loading") return;
     const cache = readCs();
     setM(Object.fromEntries(prs.map(p => [p.i, cachedCs(p, cache)])));
     setFail(false);
@@ -278,7 +282,7 @@ function useCsDesc(prs, lang) {
     setBusy(true);
     csDescs(prs, r => { if (!off) setM(r); }).then(r => { if (!off) setM(r); }).catch(() => { if (!off) setFail(true); }).finally(() => { if (!off) setBusy(false); });
     return () => { off = true; };
-  }, [ids, lang]);
+  }, [ids, lang, _trState]);
   return { m, busy, fail };
 }
 
@@ -292,6 +296,8 @@ export default function App(){
   const [composeBack,setComposeBack]=useState("home");
   const [list,setList]=useState(P);
   const [live,setLive]=useState(null); // null = loading, true = current OVD-Info data, false = fallback to P
+  const [,setTrv]=useState(0);
+  useEffect(()=>{loadTranslations().then(()=>setTrv(v=>v+1));},[]);
   useEffect(()=>{
     let off=false;
     fetch("/api/prisoners").then(r=>r.ok?r.json():Promise.reject(new Error("HTTP "+r.status)))
@@ -535,7 +541,7 @@ function Choose({cs,lang,list,live,back,pick}){
       <button onClick={()=>{setF("y");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="y"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>🧑 {t("Mladí","Young","Молодые")}</button>
       {tops.map(t=><button key={t.q} onClick={()=>ht(t)} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${q===t.q?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t.l}</button>)}
     </div>
-    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{res.length} {t("výsledků","results","результатов")}{cs&&live&&" · Popisy vězňů, ke kterým nemáme vlastní český text, automaticky překládá AI z ruských textů OVD-Info."}</div>
+    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{res.length} {t("výsledků","results","результатов")}{cs&&live&&" · Popisy vězňů, ke kterým nemáme vlastní český text, jsou strojově přeložené z ruských textů OVD-Info."}</div>
     {res.length===0?<p className="text-center text-stone-400 py-8">{t("Žádné výsledky. Zkuste jiný výraz.","No results. Try different terms.","Нет результатов. Попробуйте другой запрос.")}</p>:<>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{res.slice(0,shown).map(p=>
       <button key={p.i} onClick={()=>pick(p)} className="text-left bg-white border border-stone-200 rounded-lg p-4 hover:border-red-600 hover:shadow-md transition-all">

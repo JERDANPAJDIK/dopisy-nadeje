@@ -42,6 +42,7 @@ Výstup je v `dist/`.
 - **Frontend**: React + Vite + Tailwind, single page app
 - **Backend**: Netlify Edge Function (`netlify/edge-functions/claude.js`) jako proxy k Anthropic API
 - **Data vězňů**: Netlify Function `netlify/functions/prisoners.mjs` na `/api/prisoners` – stahuje z API OVD-Info (`api-data.ovd.info/profiles`, stejný výběr jako Věstočka), převádí do formátu aplikace a Netlify odpověď drží v CDN cache 6 h. Ručně psané texty Gulag.cz (pole `P` v `App.jsx`) se přes ně překryjí.
+- **České popisy vězňů**: předpřeložené Claude Sonnetem v `public/translations-cs.json` (klíč = id vězně + hash ruského textu). Obnovit / doplnit nové: `node scripts/translate-descriptions.mjs` (klíč z `.env.local`) nebo `node scripts/translate-descriptions.mjs --via-proxy` (přes produkční `/api/claude`), pak commit souboru. Co v souboru chybí, přeloží aplikace za běhu.
 - API klíče jsou vždy server-side, nikdy se nedostanou do prohlížeče
 
 ## Cena provozu

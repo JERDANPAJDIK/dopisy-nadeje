@@ -60,8 +60,12 @@ export const sD=`Translate short Russian descriptions of political prisoners in 
 The input is a JSON object {"id": "Russian text"}. Translate each text faithfully and completely: add nothing, explain nothing, leave nothing out, keep the neutral factual tone. Names of organisations and media stay in Czech quotation marks (\u201E...\u201C).
 Use these fixed terms for the Russian penal system (never Czech prison categories like "se zvýšenou ostrahou"): колония общего режима = trestanecká kolonie s běžným režimem; колония строгого режима = trestanecká kolonie s přísným režimem; колония особого режима = trestanecká kolonie se zvláštním režimem; колония-поселение = kolonie-osada; СИЗО = vyšetřovací vazba; принудительное лечение = nucená psychiatrická léčba.
 Natural Czech, not word-for-word: житель/жительница = obyvatel/obyvatelka (never "občan"); приговорён к N годам = odsouzen k N letům; участие в батальоне X = účast v praporu X. Use the Czech en dash "\u2013" with spaces, never the em dash.
+The Czech text must contain NO Cyrillic letters at all, not even inside a word: крымскотатарский = krymskotatarský; батальон имени X = prapor pojmenovaný po X; предположительно = pravděpodobně; names of newspapers or songs are transliterated or translated.
 Write Russian personal names and place names in the usual Czech transliteration (e.g. Jurij, Jevgenija, Čeljabinsk, Nižnij Novgorod); established Czech names stay Czech (Moskva, Petrohrad, Krym).
 Output one line per id, nothing else: <t id="ID">Czech text</t> (the same ids as in the input).`;
+// Short stable hash of a text (djb2, base36) - identifies which Russian text a stored translation belongs to
+export const textHash=(s)=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36);};
+
 // Parses the sD output into {id: text} (tags instead of JSON: quotation marks inside the texts break JSON)
 export const parseTranslations=(s)=>{
   const o={},re=/<t id="([^"]+)">([\s\S]*?)<\/t>/g;let m;
