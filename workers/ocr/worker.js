@@ -18,7 +18,7 @@ const ALLOWED_MIME = [
 ];
 
 // Rate limit: kolik requestů na jednu IP za okno
-const RATE_MAX = 20;
+const RATE_MAX = 150; // per IP per hour; a school class shares one IP
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hodina
 const hits = new Map(); // best-effort, per-isolate
 

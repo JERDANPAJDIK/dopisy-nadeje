@@ -1,12 +1,24 @@
+// Rate limits per hour, in memory (best effort, per edge instance).
+// Two levels, because a whole school class shares one public IP:
+// - per browser (random id the app keeps in localStorage, header X-Client-Id): one person, ~5 AI calls per letter
+// - per IP: a class of ~30 pupils at once; also caps anyone who drops or rotates the client id
+const LIMIT_CLIENT = 40;
+const LIMIT_IP = 300;
+const HOUR = 3600000;
 const rateMap = new Map();
-function checkRate(ip) {
+function hit(key, max) {
   const now = Date.now();
-  for (const [k, v] of rateMap) { if (now - v.start > 3600000) rateMap.delete(k); }
-  const rec = rateMap.get(ip);
-  if (!rec || now - rec.start > 3600000) { rateMap.set(ip, { start: now, count: 1 }); return true; }
-  if (rec.count >= 30) return false;
+  const rec = rateMap.get(key);
+  if (!rec || now - rec.start > HOUR) { rateMap.set(key, { start: now, count: 1 }); return true; }
+  if (rec.count >= max) return false;
   rec.count++;
   return true;
+}
+function checkRate(ip, client) {
+  const now = Date.now();
+  for (const [k, v] of rateMap) { if (now - v.start > HOUR) rateMap.delete(k); }
+  if (client && !hit("c:" + client, LIMIT_CLIENT)) return false;
+  return hit("ip:" + ip, LIMIT_IP);
 }
 
 export default async (req, context) => {
@@ -15,7 +27,7 @@ export default async (req, context) => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type, X-Client-Id",
       },
     });
   }
@@ -25,7 +37,8 @@ export default async (req, context) => {
     });
   }
   const ip = context.ip || req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRate(ip)) {
+  const client = (req.headers.get("x-client-id") || "").slice(0, 64);
+  if (!checkRate(ip, client)) {
     return new Response(JSON.stringify({ error: { message: "Too many requests" } }), { status: 429, headers: { "Content-Type": "application/json" } });
   }
   const anthropicKey = Netlify.env.get("ANTHROPIC_API_KEY");

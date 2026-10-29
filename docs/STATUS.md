@@ -39,7 +39,7 @@ Aktualizováno: 2026-10-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`, 
 ## Čeká na nás / na ověření
 - **Netlify: nastavit env proměnnou `OVD_API_KEY`** (klíč z mailu Věstočky 6. 10.) – bez ní `/api/prisoners` vrací 500 a aplikace jede jen na ručním seznamu.
 - Nasazeno a ověřeno na produkci 29. 10. (1 171 vězňů, CDN cache funguje, český překlad i doporučení s reálným AI). Evaly `npm run eval -- sD` a `npm run eval -- sM-live` zatím nespuštěné.
-- **Rate limit 30 dotazů/h na IP v `claude.js` je pro školy málo:** třída za jednou školní IP udělá ~5 AI dotazů na žáka (doporučení, překlad popisu, dopis, překlad dopisu) → po 6 žácích stop. Rozhodnout: zvednout limit (cena/zneužití) nebo jiný klíč než IP.
+- **OCR Worker:** v `workers/ocr/worker.js` zvednut limit z 20 na 150 dotazů/h na IP (třída za jednou IP). Worker se nasazuje ručně v Cloudflare dashboardu – změna platí až po vložení nového kódu tam.
 - Doporučení nad celým seznamem trvá 13–18 s (~15k tokenů vstupu). Kdyby to vadilo: prompt caching, nebo předvýběr kandidátů.
 - Saša: projít 5 ručních záznamů mimo OVD-Info (Vlasovová, Jelcovová, Oleksij a Anželika Děmjaněnkovi, Bujanovová) – nechat, nebo vyřadit? A nové ruské texty v UI (hláška o načítání, patička, „Полная история на «Весточке»“, krok 01 na úvodu).
 - Data OVD-Info občas nesedí sama se sebou (Ponomarenková: `sentence_months` = 2 roky 3 měsíce, text „к шести годам“) – ukazujeme, co OVD-Info dává.
@@ -52,6 +52,7 @@ Aktualizováno: 2026-10-29 · Evaly: 17/18 bez OCR (`npm run eval -- --no-ocr`, 
 - Nic. (Přístup k OVD-Info vyřešen 10/2026 – klíč jen pro čtení, API se obnovuje 01/07/13/19 UTC, data jsou veřejná, fotky smíme používat se zdrojem OVD-Info.)
 
 ## Klíčová rozhodnutí a proč
+- **Rate limit AI (10/2026):** 40 dotazů/h na prohlížeč (náhodné ID v localStorage, hlavička `X-Client-Id`) + 300/h na IP. Dřív 30/h na IP – celá třída za školní IP by se zasekla po ~6 žácích. Limit je v paměti edge instance, tedy jen orientační.
 - **Data vězňů přes Netlify Function, ne edge** – surová data mají ~11 MB, parsování by přesáhlo 50 ms CPU limit edge funkcí. Odpověď v CDN cache 6 h + stale-while-revalidate, OVD-Info tak dostane pár dotazů denně. API OVD-Info za Cloudflare blokuje výchozí user-agent Pythonu – funkce posílá vlastní.
 - **Fakta z OVD-Info, české texty z Gulag.cz** – ruční údaje (věk, tresty) byly z velké části zastaralé.
 - **Pořadí v seznamu:** nejdřív vězni s texty Gulag.cz, ostatní náhodně, aby se dopisy rozložily mezi všechny.

@@ -106,13 +106,25 @@ function fz(q,p){
   });
 }
 
+// Random per-browser id for the per-person rate limit in netlify/edge-functions/claude.js (no personal data)
+let _cid="";
+function clientId(){
+  if(_cid)return _cid;
+  try{_cid=localStorage.getItem("dopisy-nadeje-cid")||"";}catch(e){}
+  if(!_cid){_cid=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem("dopisy-nadeje-cid",_cid);}catch(e){}}
+  return _cid;
+}
+
 async function ai(key,sys,msg,img){
   const c=[];
   if(img){const arr=Array.isArray(img)?img:[img];for(const im of arr)c.push({type:"image",source:{type:"base64",media_type:im.type,data:im.data}});}
   c.push({type:"text",text:msg});
   // Calls Netlify Function which proxies to Anthropic API (API key on server)
   const endpoint=img?"https://dopisy-ocr.andrej-novik.workers.dev":"/api/claude";
-  const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
+  const headers={"Content-Type":"application/json"};
+  if(!img)headers["X-Client-Id"]=clientId();
+  const r=await fetch(endpoint,{method:"POST",headers,body:JSON.stringify({system:sys,messages:[{role:"user",content:c}]})});
+  if(r.status===429)throw new Error(t("Teď je k AI příliš mnoho dotazů z tohoto zařízení nebo sítě. Zkuste to prosím za chvíli.","Too many AI requests from this device or network right now. Please try again in a while.","Сейчас слишком много запросов к ИИ с этого устройства или из этой сети. Попробуйте, пожалуйста, чуть позже."));
   if(!r.ok){const e=await r.text().catch(()=>"");throw new Error(e||"API error "+r.status);}
   // Buffer partial lines: an SSE "data:" line can be split across network chunks
   const reader=r.body.getReader();const dec=new TextDecoder();let txt="",buf="";while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split("\n");buf=lines.pop();for(const line of lines){if(line.startsWith("data: ")){const d=line.slice(6);if(d==="[DONE]")continue;try{const p=JSON.parse(d);if(p.type==="content_block_delta"&&p.delta?.text)txt+=p.delta.text;}catch(e){}}}}return txt||"No response";
