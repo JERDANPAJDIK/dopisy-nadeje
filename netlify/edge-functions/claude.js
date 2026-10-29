@@ -2,7 +2,7 @@
 // Two levels, because a whole school class shares one public IP:
 // - per browser (random id the app keeps in localStorage, header X-Client-Id): one person, ~5 AI calls per letter
 // - per IP: a class of ~30 pupils at once; also caps anyone who drops or rotates the client id
-const LIMIT_CLIENT = 40;
+const LIMIT_CLIENT = 60; // incl. Czech translations of browsed prisoner pages (1 call per 25 cards)
 const LIMIT_IP = 300;
 const HOUR = 3600000;
 const rateMap = new Map();

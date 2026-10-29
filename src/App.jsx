@@ -216,7 +216,7 @@ function Avatar({ p, size, variant, dark }) {
 }
 
 // Description paragraph; in Czech shows the machine translation (marked) or, while it loads / if it fails, the English text
-function PrisonerDesc({ p, cz, busy, fail, className }) {
+function PrisonerDesc({ p, cz, busy, fail, className, noNote }) {
   const txt = desc(p, cz);
   if (_lang === "cs" && !txt) {
     if (busy) return <p className={className + " text-stone-400 italic"}>Překládám popis z ruštiny…</p>;
@@ -224,7 +224,7 @@ function PrisonerDesc({ p, cz, busy, fail, className }) {
     return null;
   }
   if (!txt) return null;
-  return <p className={className}>{txt}{_lang === "cs" && !p.d && cz && <span className="block text-[10px] text-stone-400 mt-1" style={{ fontFamily: "system-ui" }}>Automatický překlad popisu z OVD-Info</span>}</p>;
+  return <p className={className}>{txt}{_lang === "cs" && !p.d && cz && !noNote && <span className="block text-[10px] text-stone-400 mt-1" style={{ fontFamily: "system-ui" }}>Automatický překlad popisu z OVD-Info</span>}</p>;
 }
 
 // Czech translations of OVD-Info descriptions, cached in the browser (keyed by the profile's update time)
@@ -234,14 +234,17 @@ const cachedCs = (p, cache) => p.d || (cache[p.i] && cache[p.i].u === p.u ? cach
 async function csDescs(prs) {
   const cache = readCs();
   const need = prs.filter(p => !cachedCs(p, cache) && p.dr);
-  if (need.length) {
-    const r = await ai("server-managed", sD, JSON.stringify(Object.fromEntries(need.map(p => [p.i, p.dr]))));
+  for (let k = 0; k < need.length; k += 25) {
+    const chunk = need.slice(k, k + 25);
+    const r = await ai("server-managed", sD, JSON.stringify(Object.fromEntries(chunk.map(p => [p.i, p.dr]))));
     const j = parseTranslations(r);
     if (!Object.keys(j).length) throw new Error("translation failed");
-    for (const p of need) if (typeof j[p.i] === "string" && j[p.i].trim()) cache[p.i] = { u: p.u, d: j[p.i].trim() };
+    for (const p of chunk) if (typeof j[p.i] === "string" && j[p.i].trim()) cache[p.i] = { u: p.u, d: j[p.i].trim() };
+  }
+  if (need.length) {
     try {
       const ks = Object.keys(cache);
-      for (const k of ks.slice(0, Math.max(0, ks.length - 300))) delete cache[k];
+      for (const k of ks.slice(0, Math.max(0, ks.length - 1500))) delete cache[k];
       localStorage.setItem(CS_KEY, JSON.stringify(cache));
     } catch (e) {}
   }
@@ -501,6 +504,12 @@ function Choose({cs,lang,list,live,back,pick}){
   const csCache=cs?readCs():{};
   const res=list.filter(p=>{if(f==="f"&&p.g!=="f")return false;if(f==="m"&&p.g!=="m")return false;if(f==="y"&&(p.a==null||p.a>30))return false;return fz(q,p);});
   const ht=t=>{if(t.q==="f"||t.q==="m"){setF(t.q);setQ("");}else{setF("all");setQ(t.q);}};
+  // Czech: translate descriptions of the visible cards in one batch, after the list stops changing (no requests while typing)
+  const vis=res.slice(0,shown);
+  const visKey=vis.map(p=>p.i).join(",");
+  const [visDeb,setVisDeb]=useState([]);
+  useEffect(()=>{if(!cs)return;const id=setTimeout(()=>setVisDeb(vis),700);return()=>clearTimeout(id);},[visKey,cs]);
+  const {m:csd,busy:trBusy,fail:trFail}=useCsDesc(cs?visDeb:[],lang);
   return(<div className="max-w-4xl mx-auto px-4 py-6 flex-1">
     <button onClick={back} className="text-stone-400 hover:text-stone-700 text-sm mb-4" style={{fontFamily:"system-ui"}}>← {t("Zpět","Back","Назад")}</button>
     <h2 className="text-xl font-bold mb-4" style={{fontFamily:"system-ui"}}>{t("Vyberte adresáta","Choose a recipient","Выберите адресата")}</h2>
@@ -514,7 +523,7 @@ function Choose({cs,lang,list,live,back,pick}){
       <button onClick={()=>{setF("y");setQ("");}} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${f==="y"?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>🧑 {t("Mladí","Young","Молодые")}</button>
       {tops.map(t=><button key={t.q} onClick={()=>ht(t)} className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${q===t.q?"bg-stone-900 text-white border-stone-900":"bg-white text-stone-500 border-stone-200"}`} style={{fontFamily:"system-ui"}}>{t.l}</button>)}
     </div>
-    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{res.length} {t("výsledků","results","результатов")}</div>
+    <div className="text-xs text-stone-400 mb-2" style={{fontFamily:"system-ui"}}>{res.length} {t("výsledků","results","результатов")}{cs&&live&&" · Popisy vězňů, ke kterým nemáme vlastní český text, automaticky překládá AI z ruských textů OVD-Info."}</div>
     {res.length===0?<p className="text-center text-stone-400 py-8">{t("Žádné výsledky. Zkuste jiný výraz.","No results. Try different terms.","Нет результатов. Попробуйте другой запрос.")}</p>:<>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{res.slice(0,shown).map(p=>
       <button key={p.i} onClick={()=>pick(p)} className="text-left bg-white border border-stone-200 rounded-lg p-4 hover:border-red-600 hover:shadow-md transition-all">
@@ -523,7 +532,7 @@ function Choose({cs,lang,list,live,back,pick}){
           <div className="min-w-0"><div className="font-bold text-sm" style={{fontFamily:"system-ui"}}>{nm(p)}</div><div className="text-[11px] text-stone-400">{meta(p,true)}</div></div>
         </div>
         <div className="text-[11px] text-red-700 font-medium mb-1" style={{fontFamily:"system-ui"}}>{sentLbl(p)}</div>
-        <div className="text-xs text-stone-500 leading-relaxed line-clamp-4">{desc(p,cachedCs(p,csCache))}</div>
+        <PrisonerDesc p={p} cz={csd[p.i]||cachedCs(p,csCache)} busy={trBusy} fail={trFail} noNote className="text-xs text-stone-500 leading-relaxed line-clamp-4"/>
         <div className="flex flex-wrap gap-1 mt-2">
           {p.o&&<span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded" style={{fontFamily:"system-ui"}}>✉ Online</span>}
           {(_lang==="cs"?p.int:p.ie).slice(0,2).map(t=><span key={t} className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-400 rounded" style={{fontFamily:"system-ui"}}>{t}</span>)}
